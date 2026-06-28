@@ -236,5 +236,53 @@ Elevated visual quality to match premium startup products like Linear, Vercel, P
 - All 7 visual quality criteria PASSED
 - Executive Dashboard matches Linear/Vercel quality
 
+### ✅ Column Mapping UI (Completed 2025-06-28)
+Enhanced file upload with intelligent column mapping:
+
+1. **Preview Before Import**
+   - Modal appears for CSV/Excel/JSON uploads
+   - Shows file name, row count, and detected columns
+   - Data preview table (first 5 rows)
+
+2. **Auto-Detection**
+   - Automatically detects common field names
+   - Content: review, content, comment, feedback, message, body, text, description
+   - Title: title, subject, headline
+   - Author: author, user, username, customer, name, email, creator
+   - Rating: rating, stars, score, rank
+
+3. **Manual Mapping**
+   - Dropdown selectors for each field
+   - Select ANY column for content/title/author/rating
+   - Required indicator for content field
+   - Real-time preview updates
+
+4. **Import Validation**
+   - Shows count of valid reviews
+   - Deduplication by content
+   - Success toast on import
+
+### ✅ Google Play Connector (Completed 2025-06-28)
+Working Google Play review scraping:
+
+1. **CORS Proxy Solution**
+   - Uses allorigins.win public CORS proxy
+   - Fetches Google Play app pages
+   - Extracts reviews from HTML/embedded JSON
+
+2. **Tested Working**
+   - WhatsApp (com.whatsapp): 50 reviews imported
+   - Graceful fallback with helpful error messages
+
+### Connector Status
+| Connector | Status | Notes |
+|-----------|--------|-------|
+| App Store | ✅ Working | iTunes RSS API, no key required |
+| Google Play | ✅ Working | Via CORS proxy, may have limits |
+| CSV URL | ✅ Working | Any public CSV file |
+| JSON API | ✅ Working | REST APIs with auth headers |
+| Reddit | ✅ Working | Public JSON API |
+| Twitter | ❌ Needs Backend | OAuth authentication required |
+
 ---
 *Last updated: 2025-06-28*
