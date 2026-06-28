@@ -15,6 +15,7 @@ import {
   Mail,
   MessageSquare,
   Radio,
+  RefreshCw,
   Sparkles,
   TicketCheck,
   TrendingUp,
@@ -168,6 +169,41 @@ export default function Analysis() {
     );
   }
 
+  // Error state - MUST come before "Ready to analyze" to show errors properly
+  if (error && !loading) {
+    return (
+      <div className="space-y-8">
+        <PageHeader title="AI Analysis" description="Generate executive crisis reports powered by AI." />
+        <GlassCard className="border-red-500/20 bg-gradient-to-r from-red-950/30 to-red-900/20 p-8">
+          <div className="flex items-start gap-4">
+            <div className="rounded-xl bg-red-500/20 p-3 border border-red-500/30">
+              <AlertTriangle size={24} className="text-red-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-red-300">Analysis Failed</h3>
+              <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{error}</p>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setError(null)}
+                  className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.08]"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={handleAnalyze}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl"
+                >
+                  <RefreshCw size={16} />
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    );
+  }
+
   // Ready to analyze state
   if (!result && !loading) {
     return (
@@ -243,29 +279,6 @@ export default function Analysis() {
           <div className="mt-6 flex items-center gap-2 text-sm text-slate-500">
             <Radio size={14} className="animate-pulse text-indigo-400" />
             Clustering issues and generating insights
-          </div>
-        </GlassCard>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="space-y-8">
-        <PageHeader title="AI Analysis" description="Generate executive crisis reports powered by AI." />
-        <GlassCard className="border-red-500/20 bg-gradient-to-r from-red-950/30 to-red-900/20 p-8">
-          <div className="flex items-start gap-4">
-            <div className="rounded-xl bg-red-500/20 p-3 border border-red-500/30">
-              <AlertTriangle size={24} className="text-red-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-red-300">Analysis Failed</h3>
-              <p className="mt-2 text-sm text-slate-400">{error}</p>
-              <button onClick={handleAnalyze} className="mt-4 rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-600">
-                Retry Analysis
-              </button>
-            </div>
           </div>
         </GlassCard>
       </div>
