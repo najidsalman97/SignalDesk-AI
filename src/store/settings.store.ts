@@ -38,7 +38,7 @@ export const useSettingsStore = create<SettingsStore>()(
       providers: [
   {
     provider: "groq",
-    apiKey: "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",
+    apiKey: import.meta.env.VITE_GROQ_DEMO_KEY,
     model: "",
     enabled: true,
     priority: 1,
