@@ -6,7 +6,6 @@ interface SettingsStore {
   project: string;
   providers: ProviderSettings[];
   autoSelectProvider: boolean;
-
   setProject(project: string): void;
   setAutoSelectProvider(enabled: boolean): void;
 
@@ -36,7 +35,17 @@ export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set, get) => ({
       project: "Default Project",
-      providers: [],
+      providers: [
+  {
+    provider: "groq",
+    apiKey: "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",
+    model: "",
+    enabled: true,
+    priority: 1,
+    connectionStatus: "idle",
+    availableModels: [],
+  },
+],
       autoSelectProvider: true,
 
       setProject(project) {
