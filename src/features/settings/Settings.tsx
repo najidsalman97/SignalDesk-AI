@@ -84,7 +84,9 @@ function ProviderIcon({ provider }: { provider: AIProvider }) {
     ollama: { bg: "from-slate-500/20 to-gray-500/10 border-slate-500/20", icon: Server },
   };
 
-  const { bg, icon: Icon } = iconMap[provider];
+  // Default to gemini style if provider is unknown/corrupted
+  const iconConfig = iconMap[provider] ?? iconMap.gemini;
+  const { bg, icon: Icon } = iconConfig;
 
   return (
     <div className={clsx("flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br border", bg)}>
