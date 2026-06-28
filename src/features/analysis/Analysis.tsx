@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,7 +11,6 @@ import {
   Clock,
   Copy,
   Download,
-  ExternalLink,
   FileText,
   Mail,
   MessageSquare,
@@ -67,6 +67,7 @@ function GlassCard({ children, className, hover = false }: { children: React.Rea
     </div>
   );
 }
+
 
 function KPICard({ title, value, subtitle, icon: Icon, color, progress }: { 
   title: string; 
@@ -132,13 +133,25 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function timeAgo(timestamp: number): string {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+}
+
 export default function Analysis() {
-  const { items } = useReviewStore();
+  const reviewStore = useReviewStore();
+const navigate = useNavigate();
+const { items } = reviewStore;
   const { 
     result, 
     loading, 
     error, 
     progress,
+    stats,
     setLoading, 
     setResult, 
     setError,
@@ -148,12 +161,25 @@ export default function Analysis() {
   } = useAnalysisStore();
   const { autoSelectProvider, providers } = useSettingsStore();
   
-  const [selectedMode, setSelectedMode] = useState<AnalysisMode>("deep");
+ const [selectedMode, setSelectedMode] = useState<AnalysisMode>("deep");
+  const [completedAt, setCompletedAt] = useState<number | null>(null);
+  const [selectedIssueIndex, setSelectedIssueIndex] = useState<number | null>(null);
+  const [selectedComm, setSelectedComm] = useState<{ title: string; content: string } | null>(null);
 
+  useEffect(() => {
+    if (result && completedAt === null) {
+      setCompletedAt(Date.now());
+    }
+    if (!result && completedAt !== null) {
+      setCompletedAt(null);
+    }
+  }, [result, completedAt]);
+  const [starting, setStarting] = useState(false);
   const provider = getActiveProvider();
   const connectedProviders = useSettingsStore.getState().getConnectedProviders();
 
-  async function handleAnalyze(mode?: AnalysisMode) {
+async function handleAnalyze(mode?: AnalysisMode) {
+    setStarting(true); // NEW
     const analysisMode = mode || selectedMode;
     const abortController = new AbortController();
     setAbortController(abortController);
@@ -170,6 +196,9 @@ export default function Analysis() {
         startTime: Date.now(),
         elapsedMs: 0,
       });
+
+      // NEW: let the browser paint the loading screen before heavy work starts
+      await new Promise((r) => setTimeout(r, 0));
       
       // Validate reviews have content
       const validReviews = items.filter(item => item.content && item.content.trim().length > 0);
@@ -207,14 +236,34 @@ export default function Analysis() {
         
         setError(errorMessage);
       }
-    } catch (e) {
+} catch (e) {
       if (e instanceof Error && e.name === "AbortError") {
         setError("Analysis cancelled");
       } else {
         setError(e instanceof Error ? e.message : "Unknown error");
       }
+    } finally {
+      setStarting(false); // NEW
     }
   }
+
+function handleNewAnalysis() {
+    if (
+        !window.confirm(
+            "Start a new analysis? This will clear the current reviews and analysis."
+        )
+    ) {
+        return;
+    }
+
+    useAnalysisStore.persist.clearStorage();
+
+    useAnalysisStore.getState().clear();
+
+    useReviewStore.getState().clear();
+
+    navigate("/sources");
+}
 
   function handleCancel() {
     cancelAnalysis();
@@ -393,13 +442,17 @@ export default function Analysis() {
         )}
 
         <div className="flex gap-4">
-          <button
-            disabled={loading || !provider || items.length === 0}
+<button
+            disabled={loading || starting || !provider || items.length === 0}
             onClick={() => handleAnalyze(selectedMode)}
             data-testid="start-analysis-btn"
             className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/40 disabled:opacity-50"
           >
-            <Sparkles size={24} className="transition-transform group-hover:rotate-12" />
+            {starting ? (
+              <RefreshCw size={24} className="animate-spin" />
+            ) : (
+              <Sparkles size={24} className="transition-transform group-hover:rotate-12" />
+            )}
             {showModeSelector && selectedMode === "fast" ? "Quick Analysis" : "Start AI Analysis"}
           </button>
           
@@ -460,11 +513,15 @@ export default function Analysis() {
                 </div>
               )}
               
-              {/* Elapsed time */}
+{/* Elapsed time */}
               <div className="mt-3 flex items-center justify-center gap-4 text-xs text-slate-500">
                 <span>Elapsed: {Math.round(progress.elapsedMs / 1000)}s</span>
-                {progress.estimatedRemainingMs && progress.estimatedRemainingMs > 0 && (
+                {progress.estimatedRemainingMs && progress.estimatedRemainingMs > 0 ? (
                   <span>Remaining: ~{Math.round(progress.estimatedRemainingMs / 1000)}s</span>
+                ) : (
+                  <span>
+                    Estimated total: ~{items.length > 500 ? "1-3m" : items.length > 100 ? "30-60s" : "15s"}
+                  </span>
                 )}
               </div>
             </div>
@@ -491,22 +548,26 @@ export default function Analysis() {
   return (
     <div className="space-y-8">
       {/* Success Banner */}
-      <GlassCard className="border-emerald-500/20 bg-gradient-to-r from-emerald-950/30 to-cyan-950/20 p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30">
-              <CheckCircle2 size={24} className="text-emerald-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-emerald-300">Analysis Complete</h3>
-              <p className="text-sm text-slate-400">Your reviews have been analyzed successfully</p>
-            </div>
-          </div>
-          <Link to="/dashboard" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl">
-            View Dashboard <ArrowRight size={16} />
-          </Link>
-        </div>
-      </GlassCard>
+<GlassCard className="border-emerald-500/20 bg-gradient-to-r from-emerald-950/30 to-cyan-950/20 p-5">
+  <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex items-center gap-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30">
+        <CheckCircle2 size={24} className="text-emerald-400" />
+      </div>
+      <div>
+        <h3 className="font-semibold text-emerald-300">Analysis Complete</h3>
+        <p className="text-sm text-slate-400">Your reviews have been analyzed successfully</p>
+      </div>
+    </div>
+    <button
+      onClick={handleNewAnalysis}
+      className="flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-300 transition-all hover:bg-white/[0.08]"
+    >
+      <RefreshCw size={14} />
+      New Analysis
+    </button>
+  </div>
+</GlassCard>
 
       {/* KPI Cards */}
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
@@ -560,7 +621,13 @@ export default function Analysis() {
           </div>
         </GlassCard>
 
-        <KPICard title="AI Provider" value={provider?.provider ?? "—"} subtitle="Active" icon={Sparkles} color="purple" />
+        <KPICard 
+          title="AI Provider" 
+          value={stats?.providersUsed?.length ? stats.providersUsed[stats.providersUsed.length - 1] : provider?.provider ?? "—"} 
+          subtitle={stats?.providersUsed && stats.providersUsed.length > 1 ? `Fallback used (${stats.providersUsed.join(" → ")})` : "Active"} 
+          icon={Sparkles} 
+          color="purple" 
+        />
       </div>
 
       {/* Two Column Layout */}
@@ -587,14 +654,15 @@ export default function Analysis() {
                 </div>
                 <h3 className="text-lg font-semibold text-white">Top Issues</h3>
               </div>
-              <span className="text-sm text-indigo-400 hover:text-indigo-300 cursor-pointer flex items-center gap-1">
-                View All Issues <ChevronRight size={14} />
-              </span>
             </div>
             
             <div className="space-y-4">
               {result.topIssues.map((issue, index) => (
-                <div key={index} className="group flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all hover:bg-white/[0.04] hover:border-white/[0.1]">
+                <button
+                  key={index}
+                  onClick={() => setSelectedIssueIndex(index)}
+                  className="group flex w-full items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-all hover:bg-white/[0.04] hover:border-white/[0.1] cursor-pointer"
+                >
                   <div className={clsx(
                     "flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold",
                     issue.severity === "Critical" ? "bg-red-500/20 text-red-400 border border-red-500/30" :
@@ -617,7 +685,7 @@ export default function Analysis() {
                     <p className="text-xs text-slate-500">Affected Users</p>
                   </div>
                   <ChevronRight size={18} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-                </div>
+                </button>
               ))}
             </div>
           </GlassCard>
@@ -637,7 +705,11 @@ export default function Analysis() {
                 { title: "Status Page Update", icon: Radio, content: result.statusPageUpdate, color: "cyan" },
                 { title: "Social Media Update", icon: MessageSquare, content: result.socialMediaUpdate, color: "purple" },
               ].map((item, i) => (
-                <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <div
+                  key={i}
+                  onClick={() => setSelectedComm({ title: item.title, content: item.content })}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 cursor-pointer transition-all hover:bg-white/[0.04] hover:border-white/[0.1]"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <item.icon size={16} className={clsx(
@@ -648,7 +720,9 @@ export default function Analysis() {
                     </div>
                   </div>
                   <p className="text-sm text-slate-400 line-clamp-3 mb-3">{item.content.slice(0, 120)}...</p>
-                  <CopyButton text={item.content} />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <CopyButton text={item.content} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -698,9 +772,9 @@ export default function Analysis() {
                 </div>
                 <h3 className="font-semibold text-white">Engineering Tickets</h3>
               </div>
-              <span className="text-sm text-indigo-400 hover:text-indigo-300 cursor-pointer flex items-center gap-1">
-                View All Tickets <ChevronRight size={14} />
-              </span>
+<div className="text-sm text-slate-500">
+    {result.jiraTickets.length} Tickets
+</div>
             </div>
             
             <div className="space-y-3">
@@ -711,7 +785,10 @@ export default function Analysis() {
                     <SeverityBadge severity={ticket.priority} />
                     <span className="text-sm text-slate-300 truncate">{ticket.title}</span>
                   </div>
-                  <ExternalLink size={14} className="text-slate-600 hover:text-slate-400 cursor-pointer flex-shrink-0 ml-2" />
+                  <ChevronRight
+    size={16}
+    className="text-slate-500"
+/>
                 </div>
               ))}
             </div>
@@ -728,10 +805,19 @@ export default function Analysis() {
             
             <div className="space-y-2">
               {[
-                { label: "View Dashboard", desc: "See analytics overview", to: "/dashboard", icon: BarChart3 },
-                { label: "Export Reports", desc: "Download analysis reports", to: "/reports", icon: Download },
-                { label: "Import More Reviews", desc: "Analyze more customer feedback", to: "/sources", icon: Users },
-              ].map((action, i) => (
+                {label: "View Dashboard",
+                  desc: "See analytics overview",
+               to: "/dashboard",
+    icon: BarChart3,
+  },
+  {
+    label: "Export Reports",
+    desc: "Download analysis reports",
+    to: "/reports",
+    icon: Download,
+  },
+].map((action, i) => (
+  
                 <Link key={i} to={action.to} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04] hover:border-white/[0.1] group">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.06]">
@@ -750,19 +836,87 @@ export default function Analysis() {
         </div>
       </div>
 
-      {/* Footer */}
+{/* Footer */}
       <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <CheckCircle2 size={14} className="text-emerald-400" />
-          Analysis Completed · 2 minutes ago
+          Analysis Completed · {completedAt ? timeAgo(completedAt) : "just now"}
         </div>
         <div className="text-sm text-slate-600">
-          Analysis ID: ana_{new Date().toISOString().slice(0, 10).replace(/-/g, "_")}_{String(Math.random()).slice(2, 5)}
+          Analysis ID: ana_{completedAt ? new Date(completedAt).toISOString().slice(0, 10).replace(/-/g, "_") : ""}_{completedAt ? String(completedAt).slice(-4) : "0000"}
         </div>
         <div className="text-sm text-slate-500">
-          {items.length} reviews processed in 18.4s
+          {stats?.processedReviews ?? items.length} reviews processed in {stats?.elapsedMs ? (stats.elapsedMs / 1000).toFixed(1) : "—"}s
         </div>
       </div>
+
+      {/* Issue Detail Modal */}
+      {selectedIssueIndex !== null && result.topIssues[selectedIssueIndex] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedIssueIndex(null)} />
+          <GlassCard className="relative z-10 w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6">
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className={clsx(
+                  "flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold",
+                  result.topIssues[selectedIssueIndex].severity === "Critical" ? "bg-red-500/20 text-red-400 border border-red-500/30" :
+                  result.topIssues[selectedIssueIndex].severity === "High" ? "bg-orange-500/20 text-orange-400 border border-orange-500/30" :
+                  result.topIssues[selectedIssueIndex].severity === "Medium" ? "bg-amber-500/20 text-amber-400 border border-amber-500/30" :
+                  "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                )}>
+                  {selectedIssueIndex + 1}
+                </div>
+                <h2 className="text-lg font-semibold text-white">{result.topIssues[selectedIssueIndex].title}</h2>
+              </div>
+              <button onClick={() => setSelectedIssueIndex(null)} className="rounded-lg p-2 hover:bg-white/5 transition-colors">
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 mb-5">
+              <SeverityBadge severity={result.topIssues[selectedIssueIndex].severity} />
+              <div className="flex items-center gap-1 text-slate-400 text-sm">
+                <Users size={14} />
+                {result.topIssues[selectedIssueIndex].affectedCount} users affected
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Description</h4>
+                <p className="text-slate-300 leading-relaxed">{result.topIssues[selectedIssueIndex].description}</p>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Root Cause</h4>
+                <p className="text-slate-300 leading-relaxed">{result.topIssues[selectedIssueIndex].rootCause}</p>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recommended Fix</h4>
+                <p className="text-slate-300 leading-relaxed">{result.topIssues[selectedIssueIndex].recommendedFix}</p>
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* Customer Communication Detail Modal */}
+      {selectedComm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedComm(null)} />
+          <GlassCard className="relative z-10 w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6">
+            <div className="flex items-start justify-between mb-5">
+              <h2 className="text-lg font-semibold text-white">{selectedComm.title}</h2>
+              <button onClick={() => setSelectedComm(null)} className="rounded-lg p-2 hover:bg-white/5 transition-colors">
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedComm.content}</p>
+            <div className="mt-6">
+              <CopyButton text={selectedComm.content} />
+            </div>
+          </GlassCard>
+        </div>
+      )}
     </div>
   );
 }

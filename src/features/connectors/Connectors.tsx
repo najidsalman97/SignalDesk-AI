@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
-  ExternalLink,
   Loader2,
   Plus,
   Plug,
@@ -163,15 +162,15 @@ function AddConnectorModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =
                 {field.required && <span className="text-red-400 ml-1">*</span>}
               </label>
               
-              {field.type === "select" ? (
+{field.type === "select" ? (
                 <select
                   value={formData[field.key] || ""}
                   onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
                   className="mt-2 w-full rounded-xl border border-white/[0.1] bg-white/[0.04] p-3 text-white focus:border-indigo-500/50 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                 >
-                  <option value="">Select...</option>
+                  <option value="" className="bg-slate-800 text-white">Select...</option>
                   {field.options?.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    <option key={opt.value} value={opt.value} className="bg-slate-800 text-white">{opt.label}</option>
                   ))}
                 </select>
               ) : (
@@ -403,19 +402,9 @@ export default function Connectors() {
 
       {/* Info Cards */}
       <div className="grid gap-4 md:grid-cols-2">
-        <GlassCard className="p-5 border-blue-500/20">
-          <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
-              <ExternalLink size={18} className="text-blue-400" />
-            </div>
-            <div>
-              <h4 className="font-medium text-white">App Store &amp; Play Store</h4>
-              <p className="mt-1 text-sm text-slate-400">
-                Import reviews directly using app IDs. No API keys required for App Store.
+<p className="mt-1 text-sm text-slate-400">
+                Import reviews using app IDs. App Store needs no API key — Google Play requires a free SerpApi key.
               </p>
-            </div>
-          </div>
-        </GlassCard>
 
         <GlassCard className="p-5 border-purple-500/20">
           <div className="flex items-start gap-3">

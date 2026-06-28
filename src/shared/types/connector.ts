@@ -64,14 +64,15 @@ export const CONNECTOR_CONFIGS: Record<ConnectorType, ConnectorConfig> = {
       { key: "pages", label: "Pages to Fetch", type: "number", placeholder: "1-10", required: false },
     ],
   },
-  google_play: {
+google_play: {
     id: "google_play",
     name: "Google Play",
-    description: "Import reviews from Google Play Store",
+    description: "Import reviews from Google Play Store (via SerpApi)",
     icon: "🤖",
     color: "from-green-500/20 to-emerald-600/10 border-green-500/20",
     fields: [
       { key: "appId", label: "Package Name", type: "text", placeholder: "e.g., com.example.app", required: true },
+      { key: "apiKey", label: "SerpApi Key", type: "password", placeholder: "Get a free key at serpapi.com", required: true },
       { key: "language", label: "Language", type: "select", required: true, options: [
         { value: "en", label: "English" },
         { value: "es", label: "Spanish" },
@@ -81,6 +82,15 @@ export const CONNECTOR_CONFIGS: Record<ConnectorType, ConnectorConfig> = {
         { value: "zh", label: "Chinese" },
         { value: "pt", label: "Portuguese" },
         { value: "hi", label: "Hindi" },
+      ]},
+      { key: "country", label: "Country", type: "select", required: false, options: [
+        { value: "us", label: "United States" },
+        { value: "gb", label: "United Kingdom" },
+        { value: "de", label: "Germany" },
+        { value: "fr", label: "France" },
+        { value: "jp", label: "Japan" },
+        { value: "in", label: "India" },
+        { value: "br", label: "Brazil" },
       ]},
       { key: "count", label: "Review Count", type: "number", placeholder: "50-500", required: false },
     ],

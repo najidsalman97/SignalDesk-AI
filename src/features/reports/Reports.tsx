@@ -409,17 +409,22 @@ function generatePDF(result: AnalysisResult, reviewCount: number): jsPDF {
     doc.setTextColor(...colors.gray);
     doc.text(`${issue.affectedCount} users affected`, margin + 10, y + 18);
     
-    // Description
+// Description (render each wrapped line separately instead of rejoining them)
     doc.setFontSize(9);
     doc.setTextColor(75, 85, 99);
-    const descLines = doc.splitTextToSize(issue.description, contentWidth - 25);
-    doc.text(descLines.slice(0, 2).join(" "), margin + 10, y + 28);
+    const descLines: string[] = doc.splitTextToSize(issue.description, contentWidth - 25);
+    let descY = y + 28;
+    descLines.slice(0, 2).forEach((line: string) => {
+      doc.text(line, margin + 10, descY);
+      descY += 4.5;
+    });
     
-    // Root cause
+    // Root cause (wrap properly instead of hard character-truncating)
     if (issue.rootCause) {
       doc.setFontSize(8);
       doc.setTextColor(...colors.gray);
-      doc.text(`Root cause: ${issue.rootCause.substring(0, 60)}...`, margin + 10, y + 40);
+      const rootCauseLines: string[] = doc.splitTextToSize(`Root cause: ${issue.rootCause}`, contentWidth - 25);
+      doc.text(rootCauseLines[0] + (rootCauseLines.length > 1 ? "..." : ""), margin + 10, descY + 4);
     }
     
     y += 58;
@@ -506,20 +511,23 @@ function generatePDF(result: AnalysisResult, reviewCount: number): jsPDF {
   doc.text("Customer Email Template", margin, y);
   y += 8;
   
+  const emailLines: string[] = doc.splitTextToSize(result.customerEmail, contentWidth - 16);
+  const emailLinesShown = emailLines.slice(0, 8);
+  const emailBoxHeight = emailLinesShown.length * 4.5 + 14;
+  
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, y - 3, contentWidth, 60, 3, 3, "F");
+  doc.roundedRect(margin, y - 3, contentWidth, emailBoxHeight, 3, 3, "F");
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, y - 3, contentWidth, 60, 3, 3, "S");
+  doc.roundedRect(margin, y - 3, contentWidth, emailBoxHeight, 3, 3, "S");
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(55, 65, 81);
-  const emailLines = doc.splitTextToSize(result.customerEmail, contentWidth - 16);
-  emailLines.slice(0, 8).forEach((line: string) => {
+  emailLinesShown.forEach((line: string) => {
     doc.text(line, margin + 8, y + 5);
     y += 4.5;
   });
-  y += 25;
+  y += 15;
   
   // Status Page
   doc.setFontSize(10);
@@ -528,20 +536,23 @@ function generatePDF(result: AnalysisResult, reviewCount: number): jsPDF {
   doc.text("Status Page Update", margin, y);
   y += 8;
   
+  const statusLines: string[] = doc.splitTextToSize(result.statusPageUpdate, contentWidth - 16);
+  const statusLinesShown = statusLines.slice(0, 5);
+  const statusBoxHeight = statusLinesShown.length * 4.5 + 14;
+  
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, y - 3, contentWidth, 40, 3, 3, "F");
+  doc.roundedRect(margin, y - 3, contentWidth, statusBoxHeight, 3, 3, "F");
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, y - 3, contentWidth, 40, 3, 3, "S");
+  doc.roundedRect(margin, y - 3, contentWidth, statusBoxHeight, 3, 3, "S");
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(55, 65, 81);
-  const statusLines = doc.splitTextToSize(result.statusPageUpdate, contentWidth - 16);
-  statusLines.slice(0, 5).forEach((line: string) => {
+  statusLinesShown.forEach((line: string) => {
     doc.text(line, margin + 8, y + 5);
     y += 4.5;
   });
-  y += 20;
+  y += 15;
   
   // Social Media
   doc.setFontSize(10);
@@ -550,16 +561,19 @@ function generatePDF(result: AnalysisResult, reviewCount: number): jsPDF {
   doc.text("Social Media Response", margin, y);
   y += 8;
   
+  const socialLines: string[] = doc.splitTextToSize(result.socialMediaUpdate, contentWidth - 16);
+  const socialLinesShown = socialLines.slice(0, 4);
+  const socialBoxHeight = socialLinesShown.length * 4.5 + 14;
+  
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(margin, y - 3, contentWidth, 30, 3, 3, "F");
+  doc.roundedRect(margin, y - 3, contentWidth, socialBoxHeight, 3, 3, "F");
   doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(margin, y - 3, contentWidth, 30, 3, 3, "S");
+  doc.roundedRect(margin, y - 3, contentWidth, socialBoxHeight, 3, 3, "S");
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(55, 65, 81);
-  const socialLines = doc.splitTextToSize(result.socialMediaUpdate, contentWidth - 16);
-  socialLines.slice(0, 4).forEach((line: string) => {
+  socialLinesShown.forEach((line: string) => {
     doc.text(line, margin + 8, y + 5);
     y += 4.5;
   });

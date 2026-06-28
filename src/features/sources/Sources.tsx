@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+
 import {
   ArrowRight,
   BrainCircuit,
@@ -26,16 +27,23 @@ import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
 import { getDemoDataForImport } from "@/data/demoReviews";
 
-function GlassCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <div className={clsx(
-      "rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl",
-      className
-    )}>
-      {children}
-    </div>
-  );
-}
+import { forwardRef } from "react";
+
+const GlassCard = forwardRef<HTMLDivElement, { children: React.ReactNode; className?: string }>(
+  function GlassCard({ children, className }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={clsx(
+          "rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl",
+          className
+        )}
+      >
+        {children}
+      </div>
+    );
+  }
+);
 
 export default function Sources() {
   const { items, importedFiles, addItems, addFile, clear } = useReviewStore();
@@ -54,11 +62,19 @@ export default function Sources() {
   const [columns, setColumns] = useState<string[]>([]);
   const [mappingFileName, setMappingFileName] = useState("");
   const [mappingSourceType, setMappingSourceType] = useState<SourceType>("csv");
+  const previewRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (preview.length > 0 && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [preview.length]);
   const previewCount = preview.length;
   const estimatedImport = previewCount - duplicateCount;
   const hasReviews = items.length > 0;
-  const hasAnalysis = analysisResult !== null;
+ const hasAnalysis =
+    analysisResult !== null &&
+    items.length > 0;
 
   const detectedSource = useMemo(() => {
     if (preview.length === 0) return "-";
@@ -128,7 +144,7 @@ export default function Sources() {
               setLoading(false);
               return;
             }
-          } catch (e) {
+          } catch {
             // Fall back to auto-parse
           }
         }
@@ -387,9 +403,9 @@ export default function Sources() {
         </GlassCard>
       )}
 
-      {/* Preview */}
+{/* Preview */}
       {preview.length > 0 && (
-        <GlassCard className="p-6">
+        <GlassCard className="p-6" ref={previewRef}>
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-bold text-white">Import Preview</h2>
@@ -465,7 +481,7 @@ export default function Sources() {
               <h2 className="text-xl font-bold text-white">Imported Reviews</h2>
               <p className="mt-1 text-sm text-slate-400">{items.length} reviews in workspace</p>
             </div>
-            <button onClick={() => { clear(); toast.success("All reviews cleared"); }} className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-500/20">
+            <button onClick={() => { clear(); useAnalysisStore.getState().clear(); toast.success("All reviews cleared"); }} className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-500/20">
               <Trash2 size={16} />
               Clear All
             </button>
