@@ -85,15 +85,94 @@ async function fetchAppStoreReviews(config: Record<string, string>): Promise<Fet
 }
 
 // Google Play Reviews (using a CORS proxy for the web scraping approach)
-async function fetchGooglePlayReviews(_config: Record<string, string>): Promise<FetchResult> {
-  
-  // Note: Direct Google Play scraping requires a backend or CORS proxy
-  // For demo purposes, we'll return a helpful error message
-  return {
-    success: false,
-    reviews: [],
-    errorMessage: "Google Play connector requires a backend proxy. Use CSV URL or JSON API connectors to import Google Play reviews exported from other tools.",
-  };
+async function fetchGooglePlayReviews(config: Record<string, string>): Promise<FetchResult> {
+  const { appId, language = "en", count = "50" } = config;
+
+  if (!appId) {
+    return { success: false, reviews: [], errorMessage: "App ID is required" };
+  }
+
+  try {
+    // Use allorigins.win CORS proxy with Google Play's web page
+    const targetUrl = `https://play.google.com/store/apps/details?id=${encodeURIComponent(appId)}&hl=${language}&showAllReviews=true`;
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+    
+    const response = await fetch(proxyUrl, {
+      headers: {
+        "Accept": "text/html,application/xhtml+xml",
+      },
+    });
+
+    if (!response.ok) {
+      return { 
+        success: false, 
+        reviews: [], 
+        errorMessage: `Failed to fetch Google Play page: ${response.status}` 
+      };
+    }
+
+    const html = await response.text();
+    const reviews: SourceItem[] = [];
+    const maxReviews = parseInt(count);
+    let reviewIndex = 0;
+
+    // Extract reviews from embedded JSON data
+    // Google Play embeds review data in script tags
+    const reviewTextPattern = /"([^"]{50,500})"/g;
+    const potentialReviews: string[] = [];
+    
+    let match;
+    while ((match = reviewTextPattern.exec(html)) !== null) {
+      const text = match[1];
+      // Filter for likely review text (contains common review words, proper length)
+      if (
+        text.length >= 50 && 
+        text.length <= 500 &&
+        !text.includes("http") &&
+        !text.includes("javascript") &&
+        !text.includes("{") &&
+        !text.includes("<") &&
+        /[.!?]/.test(text) // Has punctuation like a real review
+      ) {
+        potentialReviews.push(text.replace(/\\n/g, " ").replace(/\\"/g, '"'));
+      }
+    }
+
+    // Deduplicate and take top reviews
+    const uniqueReviews = [...new Set(potentialReviews)];
+    
+    for (const text of uniqueReviews) {
+      if (reviewIndex >= maxReviews) break;
+      
+      reviews.push({
+        id: crypto.randomUUID(),
+        source: "googleplay",
+        title: "",
+        content: text,
+        rating: 0,
+        createdAt: new Date().toISOString(),
+        metadata: { appId, platform: "google_play" },
+      });
+      reviewIndex++;
+    }
+
+    if (reviews.length === 0) {
+      return { 
+        success: false, 
+        reviews: [], 
+        errorMessage: "Could not extract reviews from Google Play. Try using CSV URL connector with exported reviews." 
+      };
+    }
+
+    return { success: true, reviews };
+
+  } catch (error) {
+    return { 
+      success: false, 
+      reviews: [], 
+      errorMessage: `Google Play fetch error: ${error instanceof Error ? error.message : "Unknown error"}` 
+    };
+  }
 }
 
 // CSV URL Fetch

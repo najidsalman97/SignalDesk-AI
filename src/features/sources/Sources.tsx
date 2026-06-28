@@ -16,8 +16,9 @@ import clsx from "clsx";
 
 import FileDropzone from "@/shared/components/FileDropzone";
 import PasteReviews from "@/shared/components/PasteReviews";
+import { ColumnMappingModal, extractRawData } from "@/shared/components/ColumnMappingModal";
 
-import type { SourceItem } from "@/shared/types/source";
+import type { SourceItem, SourceType } from "@/shared/types/source";
 
 import { parseFile } from "@/services/parsers";
 import Papa from "papaparse";
@@ -46,6 +47,13 @@ export default function Sources() {
   const [duplicateCount, setDuplicateCount] = useState(0);
   const [language, setLanguage] = useState("Unknown");
   const [progress, setProgress] = useState(0);
+  
+  // Column mapping state
+  const [showColumnMapping, setShowColumnMapping] = useState(false);
+  const [rawData, setRawData] = useState<Record<string, unknown>[]>([]);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [mappingFileName, setMappingFileName] = useState("");
+  const [mappingSourceType, setMappingSourceType] = useState<SourceType>("csv");
 
   const previewCount = preview.length;
   const estimatedImport = previewCount - duplicateCount;
@@ -99,6 +107,31 @@ export default function Sources() {
       setProgress(0);
       setPendingFiles(files.length);
 
+      // For single structured files, show column mapping
+      if (files.length === 1) {
+        const file = files[0];
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        
+        if (ext === "csv" || ext === "xlsx" || ext === "xls" || ext === "json") {
+          try {
+            const { data, columns: cols } = await extractRawData(file);
+            
+            if (data.length > 0 && cols.length > 0) {
+              setRawData(data);
+              setColumns(cols);
+              setMappingFileName(file.name);
+              setMappingSourceType(ext === "json" ? "json" : ext === "xlsx" || ext === "xls" ? "excel" : "csv");
+              setShowColumnMapping(true);
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            // Fall back to auto-parse
+          }
+        }
+      }
+
+      // Auto-parse for multiple files or unsupported formats
       const parsed: SourceItem[] = [];
 
       for (let i = 0; i < files.length; i++) {
@@ -116,6 +149,15 @@ export default function Sources() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleColumnMappingConfirm(items: SourceItem[]) {
+    setPreview(items);
+    setDuplicateCount(estimateDuplicates(items));
+    setLanguage(detectLanguage(items));
+    setShowColumnMapping(false);
+    setRawData([]);
+    setColumns([]);
   }
 
   function confirmImport() {
@@ -459,6 +501,22 @@ export default function Sources() {
           <p className="mt-2 text-sm text-slate-500">Drag & drop files above, or paste reviews directly</p>
         </GlassCard>
       )}
+
+      {/* Column Mapping Modal */}
+      <ColumnMappingModal
+        isOpen={showColumnMapping}
+        onClose={() => {
+          setShowColumnMapping(false);
+          setRawData([]);
+          setColumns([]);
+          setLoading(false);
+        }}
+        rawData={rawData}
+        columns={columns}
+        fileName={mappingFileName}
+        sourceType={mappingSourceType}
+        onConfirm={handleColumnMappingConfirm}
+      />
     </div>
   );
 }

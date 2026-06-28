@@ -14,7 +14,8 @@ export type SourceType =
   | "manual"
   | "demo"
   | "csv_import"
-  | "api_import";
+  | "api_import"
+  | "google_play";
 
 export interface SourceItem {
   id: string;
