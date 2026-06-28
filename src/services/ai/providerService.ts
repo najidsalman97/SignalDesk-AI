@@ -25,7 +25,7 @@ export async function testProviderConnection(
       case "groq":
         return await testGroqConnection(apiKey, startTime);
       case "ollama":
-        return await testOllamaConnection(baseUrl, startTime);
+        return await testOllamaConnection(apiKey, baseUrl, startTime);
       default:
         return {
           success: false,
@@ -218,11 +218,81 @@ async function testGroqConnection(
   };
 }
 
-// Ollama - no auth required, local server
+// Ollama - supports both cloud API (with key) and local server
 async function testOllamaConnection(
-  baseUrl: string = "http://localhost:11434",
+  apiKey: string,
+  baseUrl: string = "https://ollama.com/api",
   startTime: number
 ): Promise<TestConnectionResult> {
+  const isCloudApi = baseUrl.includes("ollama.com") || apiKey?.length > 0;
+  
+  // For cloud API, use the models endpoint with auth
+  if (isCloudApi) {
+    const cloudUrl = baseUrl.includes("ollama.com") ? "https://ollama.com/api" : baseUrl;
+    
+    try {
+      const response = await fetch(`${cloudUrl}/tags`, {
+        headers: apiKey ? {
+          "Authorization": `Bearer ${apiKey}`,
+        } : {},
+      });
+
+      const responseTime = Math.round(performance.now() - startTime);
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        return {
+          success: false,
+          status: response.status === 401 || response.status === 403 ? "invalid" : "unreachable",
+          responseTime,
+          errorMessage: error.error?.message || `HTTP ${response.status}`,
+        };
+      }
+
+      const data = await response.json();
+      // Cloud API returns models array
+      const modelsArray = data.models || data || [];
+      const models: ProviderModel[] = (Array.isArray(modelsArray) ? modelsArray : []).map((m: any) => ({
+        id: m.name || m.model || m.id,
+        name: m.name || m.model || m.id,
+        description: m.details?.family || m.description || "",
+        isDefault: (m.name || m.model || "").includes("llama3"),
+      }));
+
+      // If no models returned, provide some defaults
+      if (models.length === 0) {
+        return {
+          success: true,
+          status: "connected",
+          responseTime,
+          models: [
+            { id: "llama3.2", name: "Llama 3.2", isDefault: true },
+            { id: "llama3.1", name: "Llama 3.1", isDefault: false },
+            { id: "gemma2", name: "Gemma 2", isDefault: false },
+            { id: "qwen2.5", name: "Qwen 2.5", isDefault: false },
+            { id: "mistral", name: "Mistral", isDefault: false },
+          ],
+        };
+      }
+
+      return {
+        success: true,
+        status: "connected",
+        responseTime,
+        models,
+      };
+    } catch (error) {
+      const responseTime = Math.round(performance.now() - startTime);
+      return {
+        success: false,
+        status: "unreachable",
+        responseTime,
+        errorMessage: error instanceof Error ? error.message : "Failed to connect to Ollama Cloud",
+      };
+    }
+  }
+
+  // Local server mode
   const response = await fetch(`${baseUrl}/api/tags`);
 
   const responseTime = Math.round(performance.now() - startTime);

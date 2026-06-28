@@ -56,8 +56,9 @@ async function analyzeWithProvider(
     case "ollama":
       return analyzeWithOllama(
         reviews,
+        provider.apiKey,
         provider.model || "llama3.2",
-        provider.baseUrl || "http://localhost:11434"
+        provider.baseUrl || "https://ollama.com/api"
       );
 
     default:

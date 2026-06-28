@@ -5,16 +5,28 @@ import { SYSTEM_PROMPT } from "../prompts";
 
 export async function analyzeWithOllama(
   reviews: SourceItem[],
+  apiKey: string,
   model: string,
-  baseUrl: string = "http://localhost:11434"
+  baseUrl: string = "https://ollama.com/api"
 ) {
   const formattedReviews = formatReviewsForAI(reviews);
+  
+  // Determine if using cloud API or local
+  const isCloudApi = baseUrl.includes("ollama.com") || (apiKey && apiKey.length > 0);
+  const apiUrl = isCloudApi ? "https://ollama.com/api/chat" : `${baseUrl}/api/chat`;
 
-  const response = await fetch(`${baseUrl}/api/chat`, {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  
+  // Add auth header for cloud API
+  if (isCloudApi && apiKey) {
+    headers["Authorization"] = `Bearer ${apiKey}`;
+  }
+
+  const response = await fetch(apiUrl, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       model,
       stream: false,
@@ -39,7 +51,13 @@ ${formattedReviews}
   });
 
   if (!response.ok) {
-    throw new Error(await response.text());
+    const errorText = await response.text();
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.error?.message || errorJson.error || `HTTP ${response.status}`);
+    } catch {
+      throw new Error(errorText || `HTTP ${response.status}`);
+    }
   }
 
   const json = await response.json();

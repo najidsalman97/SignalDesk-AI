@@ -93,10 +93,10 @@ export const PROVIDER_CONFIGS: Record<AIProvider, ProviderConfig> = {
   ollama: {
     id: "ollama",
     name: "Ollama",
-    description: "Run open-source models locally",
-    baseUrl: "http://localhost:11434",
-    requiresApiKey: false,
+    description: "Run models locally or via Ollama Cloud API",
+    baseUrl: "https://ollama.com/api",
+    requiresApiKey: true,
     defaultModel: "llama3.2",
-    docsUrl: "https://ollama.ai/",
+    docsUrl: "https://ollama.com/",
   },
 };

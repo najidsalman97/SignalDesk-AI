@@ -273,12 +273,12 @@ function AddProviderModal({
           {/* Base URL for Ollama */}
           {selectedProvider === "ollama" && (
             <div>
-              <label className="text-sm font-medium text-slate-300">Server URL</label>
+              <label className="text-sm font-medium text-slate-300">Server URL (Optional)</label>
               <div className="relative mt-2">
                 <Server size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="http://localhost:11434"
+                  placeholder="https://ollama.com/api (default)"
                   value={baseUrl}
                   onChange={(e) => {
                     setBaseUrl(e.target.value);
@@ -288,7 +288,7 @@ function AddProviderModal({
                   data-testid="provider-base-url-input"
                 />
               </div>
-              <p className="mt-1 text-xs text-slate-500">Leave empty for default localhost</p>
+              <p className="mt-1 text-xs text-slate-500">Leave empty for Ollama Cloud. Use http://localhost:11434 for local server.</p>
             </div>
           )}
 
