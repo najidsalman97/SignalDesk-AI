@@ -2,14 +2,13 @@ import {
   LayoutDashboard,
   Database,
   BrainCircuit,
-  BarChart3,
   FileText,
   Settings,
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  ExternalLink,
   Zap,
+  Plug,
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
@@ -48,10 +47,10 @@ const navItems = [
     step: 3,
   },
   {
-    label: "Insights",
-    description: "Deep Dive",
-    icon: BarChart3,
-    path: "/insights",
+    label: "Connectors",
+    description: "Data Sources",
+    icon: Plug,
+    path: "/connectors",
   },
 ];
 
@@ -61,7 +60,7 @@ export default function Sidebar() {
   const { result } = useAnalysisStore();
   const { providers } = useSettingsStore();
 
-  const activeProvider = providers.find((p) => p.enabled);
+  const activeProvider = providers.find((p) => p.enabled && p.connectionStatus === "connected");
   const hasReviews = items.length > 0;
   const hasAnalysis = result !== null;
 
@@ -164,41 +163,34 @@ export default function Sidebar() {
       <div className="border-t border-white/[0.06] p-3 space-y-2">
         {/* AI Provider Status */}
         {!collapsed && (
-          <div className="rounded-xl bg-gradient-to-r from-indigo-950/50 to-purple-950/30 p-3.5 border border-white/[0.06]">
+          <NavLink
+            to="/settings"
+            className="block rounded-xl bg-gradient-to-r from-indigo-950/50 to-purple-950/30 p-3.5 border border-white/[0.06] transition-all hover:border-indigo-500/30"
+          >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/20">
-                <Zap size={18} className="text-cyan-400" />
+              <div className={clsx(
+                "flex h-10 w-10 items-center justify-center rounded-lg border",
+                activeProvider 
+                  ? "bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 border-emerald-500/20"
+                  : "bg-gradient-to-br from-amber-500/20 to-orange-500/10 border-amber-500/20"
+              )}>
+                <Zap size={18} className={activeProvider ? "text-emerald-400" : "text-amber-400"} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-white">AI Provider</span>
-                  <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  {activeProvider && (
+                    <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  )}
                 </div>
                 <p className="text-xs text-slate-400 truncate capitalize">
-                  {activeProvider?.provider ?? "Not configured"}
+                  {activeProvider?.provider ?? "Click to configure"}
                 </p>
               </div>
+              <Settings size={14} className="text-slate-500" />
             </div>
-          </div>
+          </NavLink>
         )}
-
-        {/* Settings */}
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            clsx(
-              "flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all duration-200",
-              isActive
-                ? "bg-white/[0.08] text-white"
-                : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
-            )
-          }
-        >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04]">
-            <Settings size={18} />
-          </div>
-          {!collapsed && <span className="text-sm font-medium">Settings</span>}
-        </NavLink>
 
         {/* Collapse toggle */}
         <button
@@ -207,16 +199,6 @@ export default function Sidebar() {
         >
           {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
         </button>
-
-        {/* Help link */}
-        {!collapsed && (
-          <div className="pt-2 flex items-center justify-between px-1 text-xs text-slate-600">
-            <span>Need Help?</span>
-            <a href="#" className="flex items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors">
-              View Documentation <ExternalLink size={10} />
-            </a>
-          </div>
-        )}
       </div>
     </aside>
   );

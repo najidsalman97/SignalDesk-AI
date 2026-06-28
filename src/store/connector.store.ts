@@ -1,31 +1,64 @@
- import { create } from "zustand"
-import type { ConnectorConfig } from "@/shared/types/connector"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { Connector, ConnectorType, ConnectorStatus } from "@/shared/types/connector";
 
 interface ConnectorState {
-  connectors: ConnectorConfig[]
-  activeConnector: ConnectorConfig | null
-  setConnectors: (connectors: ConnectorConfig[]) => void
-  setActiveConnector: (connector: ConnectorConfig | null) => void
-  addConnector: (connector: ConnectorConfig) => void
-  removeConnector: (id: string) => void
-  updateConnector: (id: string, config: Partial<ConnectorConfig>) => void
+  connectors: Connector[];
+  
+  addConnector: (connector: Omit<Connector, "id" | "status">) => void;
+  removeConnector: (id: string) => void;
+  updateConnector: (id: string, updates: Partial<Connector>) => void;
+  setConnectorStatus: (id: string, status: ConnectorStatus, errorMessage?: string) => void;
+  updateSyncInfo: (id: string, reviewCount: number) => void;
 }
 
-export const useConnectorStore = create<ConnectorState>((set) => ({
-  connectors: [],
-  activeConnector: null,
-  setConnectors: (connectors) => set({ connectors }),
-  setActiveConnector: (connector) => set({ activeConnector: connector }),
-  addConnector: (connector) =>
-    set((state) => ({ connectors: [...state.connectors, connector] })),
-  removeConnector: (id) =>
-    set((state) => ({
-      connectors: state.connectors.filter((c) => c.id !== id),
-    })),
-  updateConnector: (id, config) =>
-    set((state) => ({
-      connectors: state.connectors.map((c) =>
-        c.id === id ? { ...c, ...config } : c,
-      ),
-    })),
-}))
+export const useConnectorStore = create<ConnectorState>()(
+  persist(
+    (set) => ({
+      connectors: [],
+
+      addConnector: (connector) =>
+        set((state) => ({
+          connectors: [
+            ...state.connectors,
+            {
+              ...connector,
+              id: crypto.randomUUID(),
+              status: "idle",
+            },
+          ],
+        })),
+
+      removeConnector: (id) =>
+        set((state) => ({
+          connectors: state.connectors.filter((c) => c.id !== id),
+        })),
+
+      updateConnector: (id, updates) =>
+        set((state) => ({
+          connectors: state.connectors.map((c) =>
+            c.id === id ? { ...c, ...updates } : c
+          ),
+        })),
+
+      setConnectorStatus: (id, status, errorMessage) =>
+        set((state) => ({
+          connectors: state.connectors.map((c) =>
+            c.id === id ? { ...c, status, errorMessage } : c
+          ),
+        })),
+
+      updateSyncInfo: (id, reviewCount) =>
+        set((state) => ({
+          connectors: state.connectors.map((c) =>
+            c.id === id
+              ? { ...c, reviewCount, lastSync: new Date().toISOString(), status: "connected" }
+              : c
+          ),
+        })),
+    }),
+    {
+      name: "signaldesk-connectors",
+    }
+  )
+);
