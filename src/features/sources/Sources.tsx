@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   FileText,
   Loader2,
+  Play,
   Trash2,
   Upload,
   X,
@@ -23,6 +24,7 @@ import { parseFile } from "@/services/parsers";
 import Papa from "papaparse";
 import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
+import { getDemoDataForImport } from "@/data/demoReviews";
 
 export default function Sources() {
   const { items, importedFiles, addItems, addFile, clear } = useReviewStore();
@@ -73,6 +75,20 @@ export default function Sources() {
       }
     }
     return duplicates;
+  }
+
+  function loadDemoData() {
+    setLoading(true);
+    try {
+      const demoItems = getDemoDataForImport();
+      setPreview(demoItems);
+      setDuplicateCount(0);
+      setLanguage("English");
+      setPendingFiles(1);
+      toast.success(`${demoItems.length} demo reviews ready to import`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function importFiles(files: File[]) {
@@ -290,6 +306,33 @@ export default function Sources() {
 
       {/* Stats */}
       <ImportStats reviews={items.length} files={importedFiles} />
+
+      {/* Demo Data Button - Show when no reviews */}
+      {!hasReviews && !loading && preview.length === 0 && (
+        <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500">
+                <Play size={24} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Try Demo Data</h3>
+                <p className="text-sm text-muted-foreground">
+                  Load 188 realistic mobile app reviews to test the analysis
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={loadDemoData}
+              data-testid="load-demo-data-btn"
+              className="flex items-center gap-2 rounded-xl bg-violet-500 px-5 py-2.5 font-medium text-white transition-all hover:scale-[1.02] hover:shadow-lg"
+            >
+              <Play size={18} />
+              Load Demo Data
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* File Upload */}
       <FileDropzone onFiles={importFiles} disabled={loading} />

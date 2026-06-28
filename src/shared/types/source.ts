@@ -11,7 +11,8 @@ export type SourceType =
   | "trustpilot"
   | "g2"
   | "website"
-  | "manual";
+  | "manual"
+  | "demo";
 
 export interface SourceItem {
   id: string;
