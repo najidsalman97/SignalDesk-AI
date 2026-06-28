@@ -1,0 +1,92 @@
+{
+  "theme_and_archetype": {
+    "theme": "DARK",
+    "archetype": "Archetype 5: Luxury mixed with Linear/Cursor SaaS Aesthetics",
+    "reasoning": "The application is an AI command center that demands high-fidelity, startup-quality visuals akin to Linear, Vercel, and Perplexity. Deep navy base gives it depth and mystery, while subtle blue/purple glows communicate AI capability. The multi-layered glassmorphism creates a premium, high-tech interface."
+  },
+  "colors": {
+    "background_base": "#0A0F1C",
+    "surface_glass": "rgba(255, 255, 255, 0.02)",
+    "surface_glass_hover": "rgba(255, 255, 255, 0.04)",
+    "border_glass": "rgba(255, 255, 255, 0.06)",
+    "border_glass_highlight": "rgba(255, 255, 255, 0.15)",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#9CA3AF",
+    "accent_blue": "#3B82F6",
+    "accent_purple": "#8B5CF6",
+    "accent_cyan": "#06B6D4",
+    "glow_blue": "rgba(59, 130, 246, 0.5)",
+    "glow_purple": "rgba(139, 92, 246, 0.5)"
+  },
+  "typography": {
+    "headings_font": "Outfit, sans-serif",
+    "body_font": "Geist, sans-serif",
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-light tracking-tighter text-white",
+      "h2": "text-2xl sm:text-3xl font-medium tracking-tight text-white",
+      "metric_large": "text-5xl font-light tracking-tighter text-white drop-shadow-sm",
+      "body": "text-sm text-gray-400 leading-relaxed",
+      "label": "text-xs font-medium tracking-[0.1em] uppercase text-gray-500"
+    }
+  },
+  "background_style": {
+    "description": "Deep navy base layered with soft radial gradients, subtle grid pattern, and noise texture.",
+    "css_implementation": "Use a fixed div with bg-[#0A0F1C]. Add two large fixed blurred absolute circles (e.g. bg-blue-600/10 and bg-purple-600/10) with blur-[120px]. Add a subtle CSS grid background pattern overlay. Add an SVG noise overlay (mix-blend-overlay, opacity-20) using a data URI SVG noise filter."
+  },
+  "glassmorphism_rules": {
+    "panel": "backdrop-blur-xl bg-white/[0.02] border border-white/[0.05] rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] ring-1 ring-inset ring-white/[0.02]",
+    "hover_state": "hover:bg-white/[0.04] hover:border-white/[0.1] hover:-translate-y-1 hover:shadow-[0_16px_40px_0_rgba(0,0,0,0.5)] transition-all duration-300 ease-out",
+    "active_state": "bg-white/[0.06] border-white/[0.15] shadow-inner"
+  },
+  "microinteractions": {
+    "transitions": "transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+    "hover_lift": "hover:-translate-y-1 hover:scale-[1.01]",
+    "button_glow": "hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]",
+    "icon_animation": "group-hover:scale-110 transition-transform duration-300"
+  },
+  "components": {
+    "GlassCard": "Use generic glassmorphism panel classes. Must have inner padding (p-6 or p-8).",
+    "MetricTile": "GlassCard + Large Metric + Soft Trend Arrow (e.g. +12% in green-400) + Colored Icon Container.",
+    "GlowButton": "bg-white/[0.05] border border-white/10 rounded-lg px-4 py-2 text-sm text-white hover:bg-white/10 hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all",
+    "GradientBadge": "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-blue-200 text-xs px-2.5 py-0.5 rounded-full font-medium",
+    "IconContainer": "w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-b from-white/10 to-transparent border border-white/10 group-hover:border-white/20 transition-colors"
+  },
+  "layout_and_spacing": {
+    "sidebar": "Fixed, w-64, floating glass panel with m-4 rounded-2xl. Animated active indicator (a 2px vertical blue bar or soft background highlight).",
+    "topbar": "Sticky glass header, backdrop-blur-md bg-[#0A0F1C]/70 border-b border-white/10. Logo clickable to home. Workspace info dropdown.",
+    "main_content": "ml-72 p-8 pt-24 min-h-screen",
+    "bento_grid": "grid grid-cols-1 md:grid-cols-4 lg:grid-cols-12 gap-6"
+  },
+  "pages_strategy": {
+    "Dashboard": "Executive command center. Top: 3-4 MetricTiles (Exec Summary). Middle: Bento grid. span-8 for Top Issues interactive cards. span-4 for Vertical activity timeline. Engineering Tickets in bottom span-full.",
+    "Analysis": "Hero page with clear section separation using subtle border lines. Sticky summary card on right (span-4). Left side (span-8) has analysis blocks with smooth reveal animations, color-coded severity badges.",
+    "Reports": "Grid of Export Cards. Not standard buttons. Cards with icon, title, description, preview, and an elegant download button inside.",
+    "Sources": "Import reviews interface with a magical 'AI demo data loader' (shimmer effect, ascii or tech loader animation).",
+    "Settings": "AI Provider Manager. List or grid of connected models (OpenAI, Anthropic) with status toggles.",
+    "Connectors": "Grid of integration sources (Slack, Zendesk). Use react-icons."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "usage": "Use with stroke-width 1.5. Wrap inside IconContainer for premium look."
+  },
+  "testing": {
+    "data_testid": "MANDATORY on all buttons, links, inputs, and interactive cards (e.g. data-testid='sidebar-link-dashboard')."
+  },
+  "image_urls": [
+    {
+      "category": "user_avatar",
+      "url": "https://images.pexels.com/photos/20157010/pexels-photo-20157010.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Elegant portrait of a young male professional for the topbar workspace info avatar."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Install `lucide-react` and `react-icons` if not present.",
+    "Ensure the fonts `Outfit` and `Geist` are imported via Google Fonts or standard imports in `index.css`.",
+    "Implement the background strictly in the root layout (or App.js) so it stays fixed behind all routes. Include radial gradients, noise filter, and subtle grid.",
+    "Replace generic components with the defined `GlassCard`, `MetricTile`, `GlowButton`, `GradientBadge` definitions.",
+    "Do not use Shadcn for the main marketing/dashboard wrapper layouts; stick to pure Tailwind to achieve the highly specific Linear-style glassmorphism. You can use Shadcn for complex logic (Dialogs, Dropdowns, DatePicker).",
+    "Add 'data-testid' to ALL interactive elements.",
+    "Implement the floating sidebar by giving it `m-4`, `h-[calc(100vh-32px)]`, and absolute/fixed positioning, adjusting the main content margin accordingly.",
+    "Do not output HTML string as JSON, make sure these rules are implemented exactly using actual React JS (.js) components."
+  ]
+}
