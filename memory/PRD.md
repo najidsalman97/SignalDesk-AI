@@ -14,10 +14,10 @@ SignalDesk AI is a frontend-only React application for analyzing customer feedba
 /app/
 ├── src/
 │   ├── app/           # Layout components (AppLayout.tsx)
-│   ├── features/      # Page modules (analysis, dashboard, landing, reports, settings, sources)
+│   ├── features/      # Page modules (analysis, dashboard, landing, reports, settings, sources, connectors)
 │   ├── shared/        # Reusable UI components (Sidebar, Navbar, MetricCard, EmptyState)
 │   ├── store/         # Zustand state management
-│   ├── services/      # AI providers and data parsers
+│   ├── services/      # AI providers, data parsers, connectors
 │   ├── data/          # Demo dataset (demoReviews.ts)
 │   ├── index.css      # Global Tailwind/Theme styles
 ├── vite.config.ts     # Vite configuration (allowedHosts: true for preview URL)
@@ -43,18 +43,31 @@ SignalDesk AI is a frontend-only React application for analyzing customer feedba
 8. **Enable/Disable Toggle**: Per-provider activation control
 9. **Local Storage**: Secure browser-only credential storage
 
-### ✅ UI/UX (Completed)
-1. **Dark Glassmorphism Theme** - Enterprise SaaS aesthetic (Linear/Vercel style)
-2. **Glass Cards** - Semi-transparent with backdrop blur
-3. **Responsive Design** - Mobile-friendly layouts
-4. **Loading States** - Spinners and progress indicators
-5. **Empty States** - Helpful guidance when no data
+### ✅ Data Connectors (Completed 2025-06-28)
+1. **6 Connector Types**: App Store, Google Play, CSV URL, JSON API, Reddit, Twitter/X
+2. **App Store**: Fetches reviews via iTunes RSS API (no API key required)
+3. **Google Play**: Configuration ready (requires backend proxy for production)
+4. **CSV URL**: Import from any public CSV file with column mapping
+5. **JSON API**: Connect to REST APIs with auth headers and data path navigation
+6. **Reddit**: Fetch posts from subreddits using public JSON API
+7. **Twitter/X**: Configuration ready (requires backend proxy for production)
+8. **Sync Status**: Shows Connected/Syncing/Error with last sync timestamp
+9. **Review Counter**: Tracks total reviews imported per connector
+
+### ✅ UI/UX Cleanup (Completed 2025-06-28)
+1. **Removed**: SD button, duplicate Settings, notification bell, search bar
+2. **Removed**: Insights page (redundant), Integrations page (placeholder)
+3. **Simplified Navbar**: Only project name + "SignalDesk AI • v1.0"
+4. **Clean Sidebar**: Dashboard, Sources, Analysis, Reports, Connectors
+5. **Settings Access**: Only via AI Provider card at bottom of sidebar
 
 ## Key Technical Decisions
 - `vite.config.ts`: `allowedHosts: true` (boolean, not string) for platform preview
 - `supervisord.conf`: `directory=/app` (not /app/frontend)
 - Provider API keys stored in localStorage (plaintext with security notice)
 - Direct browser fetch to AI APIs (no backend proxy)
+- App Store uses public iTunes RSS API (CORS-friendly)
+- Reddit uses public JSON API (CORS-friendly)
 
 ## Backlog / Future Tasks
 
@@ -63,7 +76,8 @@ SignalDesk AI is a frontend-only React application for analyzing customer feedba
 - [ ] Real-time Analysis Progress - Show chunk-by-chunk progress
 
 ### P2 - Medium Priority
-- [ ] Data Connectors - Direct integrations with App Store, Google Play, Reddit, GitHub Issues
+- [ ] Google Play Scraping - Add backend proxy for CORS
+- [ ] Twitter API Integration - Add backend proxy for auth
 - [ ] Analysis History - Store and compare past analysis results
 - [ ] Team Sharing - Export/import workspace configurations
 
@@ -77,6 +91,7 @@ SignalDesk AI is a frontend-only React application for analyzing customer feedba
 - API keys visible in network inspector (documented trade-off)
 - Large file imports may be slow (browser memory constraints)
 - Ollama requires local server (not testable in cloud preview)
+- Google Play and Twitter require backend proxy due to CORS/auth
 
 ## Configuration Files
 - `/app/vite.config.ts` - Vite build configuration
