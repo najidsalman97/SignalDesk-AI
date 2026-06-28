@@ -284,5 +284,25 @@ Working Google Play review scraping:
 | Reddit | ✅ Working | Public JSON API |
 | Twitter | ❌ Needs Backend | OAuth authentication required |
 
+
+### ✅ Git Security Cleanup (Completed 2025-06-28)
+1. **Removed Leaked Secrets from Git History**
+   - Used `git filter-repo` to completely scrub `test_reports/` and `memory/test_credentials.md` from all commits
+   - History rewritten across 35 commits
+   - Verified no secrets remain in git history
+
+2. **Updated .gitignore**
+   - Added `test_reports/` directory
+   - Added `memory/test_credentials.md`
+   - Added common credential patterns: `.env`, `*.pem`, `*.key`, etc.
+
+3. **Added data-testid Attributes**
+   - `confirm-import-btn` and `cancel-import-btn` on Sources page
+   - `column-mapping-modal`, `column-mapping-close-btn`, `column-mapping-cancel-btn`, `column-mapping-import-btn` on ColumnMappingModal
+
+4. **Fixed Code Issues**
+   - Added proper error handling to `loadDemoData()` function
+   - Fixed empty catch block in Sources.tsx
+
 ---
 *Last updated: 2025-06-28*

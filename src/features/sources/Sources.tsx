@@ -96,6 +96,9 @@ export default function Sources() {
       setLanguage("English");
       setPendingFiles(1);
       toast.success(`${demoItems.length} demo reviews ready to import`);
+    } catch (error) {
+      toast.error("Failed to load demo data");
+      console.error("Demo data error:", error);
     } finally {
       setLoading(false);
     }
@@ -207,7 +210,9 @@ export default function Sources() {
         toast.success(`Detected JSON (${imported.length} records)`);
         return;
       }
-    } catch {}
+    } catch {
+      // Not valid JSON, continue to try CSV
+    }
 
     // Try CSV
     if (trimmed.includes(",") && trimmed.includes("\n")) {
@@ -420,11 +425,11 @@ export default function Sources() {
 
           {/* Actions */}
           <div className="flex gap-3 mb-6">
-            <button onClick={confirmImport} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl">
+            <button data-testid="confirm-import-btn" onClick={confirmImport} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl">
               <Upload size={18} />
               Import {estimatedImport} Reviews
             </button>
-            <button onClick={cancelImport} className="flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.02] px-4 py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.06]">
+            <button data-testid="cancel-import-btn" onClick={cancelImport} className="flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.02] px-4 py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.06]">
               <X size={18} />
               Cancel
             </button>

@@ -160,7 +160,7 @@ export function ColumnMappingModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0d1424] shadow-2xl">
+      <div data-testid="column-mapping-modal" className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0d1424] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
@@ -174,6 +174,7 @@ export function ColumnMappingModal({
           </div>
           <button
             onClick={onClose}
+            data-testid="column-mapping-close-btn"
             className="p-2 rounded-lg hover:bg-white/[0.05] transition-colors"
           >
             <X size={20} className="text-slate-400" />
@@ -349,6 +350,7 @@ export function ColumnMappingModal({
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
+              data-testid="column-mapping-cancel-btn"
               className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
             >
               Cancel
@@ -358,6 +360,7 @@ export function ColumnMappingModal({
               onClick={handleConfirm}
               disabled={!mapping.content || isProcessing}
               icon={isProcessing ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+              data-testid="column-mapping-import-btn"
             >
               {isProcessing ? "Processing..." : "Import Reviews"}
             </GlowButton>
