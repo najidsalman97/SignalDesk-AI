@@ -169,6 +169,17 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "signaldesk-settings",
+      // Migrate old data to ensure availableModels array exists
+      migrate: (persistedState: any, version: number) => {
+        if (persistedState?.providers) {
+          persistedState.providers = persistedState.providers.map((p: any) => ({
+            ...p,
+            availableModels: p.availableModels ?? [],
+          }));
+        }
+        return persistedState;
+      },
+      version: 1,
     }
   )
 );

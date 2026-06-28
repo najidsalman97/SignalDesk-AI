@@ -465,12 +465,12 @@ function ProviderCard({
               <span className="font-mono text-xs bg-white/5 px-2 py-0.5 rounded">
                 {provider.model}
               </span>
-              {provider.availableModels.length > 0 && (
+              {(provider.availableModels?.length ?? 0) > 0 && (
                 <button
                   onClick={() => setShowModels(!showModels)}
                   className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  {provider.availableModels.length} models
+                  {provider.availableModels?.length ?? 0} models
                   <ChevronDown size={14} className={clsx("transition-transform", showModels && "rotate-180")} />
                 </button>
               )}
@@ -532,11 +532,11 @@ function ProviderCard({
         </div>
 
         {/* Model Selector */}
-        {showModels && provider.availableModels.length > 0 && (
+        {showModels && (provider.availableModels?.length ?? 0) > 0 && (
           <div className="mt-4 pt-4 border-t border-white/[0.06]">
             <label className="text-sm font-medium text-slate-300">Select Model</label>
             <div className="mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
-              {provider.availableModels.map((model) => (
+              {(provider.availableModels ?? []).map((model) => (
                 <button
                   key={model.id}
                   onClick={() => setProviderModel(provider.provider, model.id)}
