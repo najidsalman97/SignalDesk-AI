@@ -35,17 +35,7 @@ export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set, get) => ({
       project: "Default Project",
-      providers: [
-  {
-    provider: "groq",
-    apiKey: "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",
-    model: "",
-    enabled: true,
-    priority: 1,
-    connectionStatus: "idle",
-    availableModels: [],
-  },
-],
+      providers: [],
       autoSelectProvider: true,
 
       setProject(project) {
