@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   BrainCircuit,
   CheckCircle2,
@@ -553,6 +555,38 @@ export default function Analysis() {
         <CollapsibleSection title="Social Media" icon={MessageSquare} defaultOpen={false}>
           <TextBlock content={result.socialMediaUpdate} />
         </CollapsibleSection>
+      </div>
+
+      {/* Next Steps */}
+      <div className="flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500">
+            <CheckCircle2 size={24} className="text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Analysis Complete!</h3>
+            <p className="text-sm text-muted-foreground">
+              View your dashboard or export reports
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <Link
+            to="/reports"
+            className="flex items-center gap-2 rounded-xl border px-5 py-2.5 font-medium transition-colors hover:bg-accent"
+          >
+            <Download size={18} />
+            Export Reports
+          </Link>
+          <Link
+            to="/dashboard"
+            data-testid="go-to-dashboard-btn"
+            className="flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 font-medium text-white transition-all hover:scale-[1.02] hover:shadow-lg"
+          >
+            View Dashboard
+            <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
     </div>
   );

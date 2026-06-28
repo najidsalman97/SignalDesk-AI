@@ -341,10 +341,12 @@ export default function Dashboard() {
         </Link>
         <Link
           to="/reports"
-          className="flex items-center gap-2 rounded-xl border px-4 py-2.5 font-medium transition-colors hover:bg-accent"
+          data-testid="go-to-reports-btn"
+          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-lg"
         >
           <FileText size={18} />
           Export Reports
+          <ArrowRight size={16} />
         </Link>
         <Link
           to="/sources"
