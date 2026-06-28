@@ -174,7 +174,7 @@ async function testOpenRouterConnection(
       name: m.name || m.id,
       description: m.description,
       contextLength: m.context_length,
-      isDefault: m.id === "anthropic/claude-3.5-sonnet",
+      isDefault: m.id === "deepseek/deepseek-chat-v3-0324:free", // Free tier default
     }));
 
   return {
@@ -215,7 +215,7 @@ async function testGroqConnection(
       id: m.id,
       name: m.id,
       contextLength: m.context_window,
-      isDefault: m.id === "llama-3.3-70b-versatile",
+      isDefault: m.id === "llama-3.1-8b-instant", // Free tier with higher limits
     }));
 
   return {

@@ -78,7 +78,7 @@ export const PROVIDER_CONFIGS: Record<AIProvider, ProviderConfig> = {
     description: "Access multiple AI models through one API",
     baseUrl: "https://openrouter.ai/api/v1",
     requiresApiKey: true,
-    defaultModel: "anthropic/claude-3.5-sonnet",
+    defaultModel: "deepseek/deepseek-chat-v3-0324:free", // Free tier model
     docsUrl: "https://openrouter.ai/",
   },
   groq: {
@@ -87,7 +87,7 @@ export const PROVIDER_CONFIGS: Record<AIProvider, ProviderConfig> = {
     description: "Ultra-fast inference with LPU technology",
     baseUrl: "https://api.groq.com/openai/v1",
     requiresApiKey: true,
-    defaultModel: "llama-3.3-70b-versatile",
+    defaultModel: "llama-3.1-8b-instant", // Free tier with higher daily limits (14,400 RPD)
     docsUrl: "https://console.groq.com/",
   },
   ollama: {

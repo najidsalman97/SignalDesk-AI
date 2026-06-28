@@ -43,14 +43,14 @@ async function analyzeWithProvider(
       return analyzeWithOpenRouter(
         reviews,
         provider.apiKey,
-        provider.model || "anthropic/claude-3.5-sonnet"
+        provider.model || "deepseek/deepseek-chat-v3-0324:free"
       );
 
     case "groq":
       return analyzeWithGroq(
         reviews,
         provider.apiKey,
-        provider.model || "llama-3.3-70b-versatile"
+        provider.model || "llama-3.1-8b-instant"
       );
 
     case "ollama":
