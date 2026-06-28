@@ -286,7 +286,7 @@ export async function analyzeChunk(
       return analyzeChunkWithGemini(
         reviews,
         provider.apiKey,
-        provider.model || "gemini-2.0-flash",
+        provider.model || "gemini-2.5-flash",
         chunkIndex,
         totalChunks,
         signal
@@ -357,7 +357,7 @@ export async function generateReport(
       return generateReportWithGemini(
         mergedData,
         provider.apiKey,
-        provider.model || "gemini-2.0-flash",
+        provider.model || "gemini-2.5-flash",
         signal
       );
       

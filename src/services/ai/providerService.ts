@@ -89,7 +89,7 @@ async function testGeminiConnection(
       name: m.displayName || m.name.replace("models/", ""),
       description: m.description,
       contextLength: m.inputTokenLimit,
-      isDefault: m.name.includes("gemini-2.0-flash"),
+      isDefault: m.name.includes("gemini-2.5-flash") && !m.name.includes("lite"),
     }));
 
   return {

@@ -60,7 +60,7 @@ export const PROVIDER_CONFIGS: Record<AIProvider, ProviderConfig> = {
     description: "Google's latest AI models with advanced reasoning",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
     requiresApiKey: true,
-    defaultModel: "gemini-2.0-flash",
+    defaultModel: "gemini-2.5-flash",
     docsUrl: "https://ai.google.dev/",
   },
   openai: {

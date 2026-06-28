@@ -161,7 +161,15 @@ export default function Analysis() {
     try {
       setLoading(true);
       setError(null);
-      setProgress(null);
+      
+      // Show initial progress immediately for user feedback
+      setProgress({
+        phase: "preparing",
+        message: "Preparing analysis...",
+        percentComplete: 0,
+        startTime: Date.now(),
+        elapsedMs: 0,
+      });
       
       // Validate reviews have content
       const validReviews = items.filter(item => item.content && item.content.trim().length > 0);
@@ -186,7 +194,18 @@ export default function Analysis() {
       if (result.success && result.result) {
         setResult(result.result, result.stats);
       } else {
-        setError(result.error || "Analysis failed");
+        // Check if there were no fallback providers
+        const connectedCount = providers.filter(p => p.enabled && p.connectionStatus === "connected").length;
+        let errorMessage = result.error || "Analysis failed";
+        
+        if (connectedCount <= 1 && errorMessage.includes("Switching to next provider")) {
+          errorMessage = errorMessage.replace(
+            "Switching to next provider...",
+            "No fallback providers configured. Add another provider in Settings or try a different model."
+          );
+        }
+        
+        setError(errorMessage);
       }
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") {

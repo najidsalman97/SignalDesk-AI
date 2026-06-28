@@ -64,11 +64,24 @@ export function parseProviderError(errorText: string): {
   isQuotaError: boolean;
   isRateLimit: boolean;
   isInvalidKey: boolean;
+  isPermanentQuota: boolean;
   humanMessage: string;
 } {
   const lower = errorText.toLowerCase();
   
-  // Quota errors
+  // Permanent quota errors (limit: 0) - don't retry
+  if (lower.includes("limit: 0") || lower.includes("limit:0") || 
+      (lower.includes("quota") && lower.includes("limit") && lower.includes("0"))) {
+    return {
+      isQuotaError: true,
+      isRateLimit: false,
+      isInvalidKey: false,
+      isPermanentQuota: true,
+      humanMessage: "Model quota disabled for your account. Try a different model (e.g., gemini-2.5-flash).",
+    };
+  }
+  
+  // Quota errors (but not permanent)
   if (lower.includes("resource_exhausted") || 
       lower.includes("quota exceeded") ||
       lower.includes("insufficient credits") ||
@@ -77,11 +90,12 @@ export function parseProviderError(errorText: string): {
       isQuotaError: true,
       isRateLimit: false,
       isInvalidKey: false,
+      isPermanentQuota: false,
       humanMessage: "API quota exhausted. Switching to next provider...",
     };
   }
   
-  // Rate limits
+  // Rate limits (transient, can retry)
   if (lower.includes("rate_limit") || 
       lower.includes("too many requests") ||
       lower.includes("429")) {
@@ -89,6 +103,7 @@ export function parseProviderError(errorText: string): {
       isQuotaError: false,
       isRateLimit: true,
       isInvalidKey: false,
+      isPermanentQuota: false,
       humanMessage: "Rate limited. Retrying with backoff...",
     };
   }
@@ -102,6 +117,7 @@ export function parseProviderError(errorText: string): {
       isQuotaError: false,
       isRateLimit: false,
       isInvalidKey: true,
+      isPermanentQuota: false,
       humanMessage: "Invalid API key. Please check your credentials.",
     };
   }
@@ -110,6 +126,7 @@ export function parseProviderError(errorText: string): {
     isQuotaError: false,
     isRateLimit: false,
     isInvalidKey: false,
+    isPermanentQuota: false,
     humanMessage: errorText.slice(0, 200),
   };
 }
@@ -157,8 +174,8 @@ export async function withRetry<T>(
       // Check if retryable
       const parsed = parseProviderError(errorText);
       
-      // Don't retry invalid keys or quota errors
-      if (parsed.isInvalidKey || parsed.isQuotaError) {
+      // Don't retry invalid keys, permanent quota, or regular quota errors
+      if (parsed.isInvalidKey || parsed.isQuotaError || parsed.isPermanentQuota) {
         return {
           success: false,
           error: parsed.humanMessage,
