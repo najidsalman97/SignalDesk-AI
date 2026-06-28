@@ -196,10 +196,6 @@ export default function Analysis() {
       setLoading(true);
       const chunks = chunkReviews(items);
 
-      if (chunks.length > 1) {
-        console.log(`Created ${chunks.length} analysis chunks`);
-      }
-
       const response = await analyzeReviews(chunks[0].reviews);
       setResult(response);
     } catch (e) {

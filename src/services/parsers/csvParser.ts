@@ -25,13 +25,6 @@ export async function parseCSV(
     results: ParseResult<Record<string, unknown>>
   ) {
     try {
-      if (results.errors.length > 0) {
-        console.warn(
-          "CSV parsing warnings",
-          results.errors
-        );
-      }
-
       const rows = results.data.filter(
         (row) =>
           row &&
