@@ -58,18 +58,26 @@ async function testGeminiConnection(
   startTime: number
 ): Promise<TestConnectionResult> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+    `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`
   );
 
   const responseTime = Math.round(performance.now() - startTime);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    let errorMessage = error.error?.message || `HTTP ${response.status}`;
+    
+    // Detect OAuth token error and provide helpful guidance
+    if (errorMessage.includes("ACCESS_TOKEN_TYPE_UNSUPPORTED") || 
+        errorMessage.includes("OAuth 2 access token")) {
+      errorMessage = "Invalid key format. You provided an OAuth token, not an API key. Get a proper API key (starts with 'AIza...') from https://aistudio.google.com/app/apikey";
+    }
+    
     return {
       success: false,
       status: response.status === 401 || response.status === 403 ? "invalid" : "unreachable",
       responseTime,
-      errorMessage: error.error?.message || `HTTP ${response.status}`,
+      errorMessage,
     };
   }
 

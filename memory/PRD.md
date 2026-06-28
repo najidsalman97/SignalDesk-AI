@@ -98,5 +98,18 @@ SignalDesk AI is a frontend-only React application for analyzing customer feedba
 - `/etc/supervisor/conf.d/supervisord.conf` - Service management
 - `/app/src/index.css` - Theme CSS variables
 
+## Recent Updates (2025-06-28)
+
+### UX Improvements
+- Added helpful error detection for OAuth tokens mistakenly used as Gemini API keys
+- When users paste an OAuth token (starts with 'AQ.Ab8R...'), the app now shows: "Invalid key format. You provided an OAuth token, not an API key. Get a proper API key (starts with 'AIza...') from https://aistudio.google.com/app/apikey"
+- URL-encoded API keys in Gemini requests to prevent issues with special characters
+
+### Testing Status
+- All UI flows verified working (Settings, Sources, Analysis pages)
+- Error handling for API failures confirmed working
+- Demo data loading (188 reviews) confirmed working
+- Pending: Success path verification requires valid Gemini API key (AIza...)
+
 ---
 *Last updated: 2025-06-28*
