@@ -177,7 +177,7 @@ export default function Sidebar() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-white">
-                  {activeProvider ? "AI Active" : "Configure AI"}
+                  AI Provider
                 </span>
                 {activeProvider && (
                   <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
@@ -186,7 +186,7 @@ export default function Sidebar() {
               <p className="text-[10px] text-slate-500 truncate capitalize">
                 {activeProvider 
                   ? `${activeProvider.provider}${connectedCount > 1 ? ` +${connectedCount - 1}` : ""}`
-                  : "Click to setup"
+                  : "Click to configure"
                 }
               </p>
             </div>
