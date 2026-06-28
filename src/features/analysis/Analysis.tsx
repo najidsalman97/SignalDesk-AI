@@ -140,7 +140,19 @@ export default function Analysis() {
   async function handleAnalyze() {
     try {
       setLoading(true);
-      const chunks = chunkReviews(items);
+      setError(null); // Clear previous errors
+      
+      // Validate reviews have content
+      const validReviews = items.filter(item => item.content && item.content.trim().length > 0);
+      if (validReviews.length === 0) {
+        throw new Error("No valid reviews to analyze. Reviews must have content.");
+      }
+      
+      const chunks = chunkReviews(validReviews);
+      if (!chunks || chunks.length === 0 || !chunks[0]?.reviews?.length) {
+        throw new Error("Failed to prepare reviews for analysis.");
+      }
+      
       const response = await analyzeReviews(chunks[0].reviews);
       setResult(response);
     } catch (e) {
@@ -174,23 +186,25 @@ export default function Analysis() {
     return (
       <div className="space-y-8">
         <PageHeader title="AI Analysis" description="Generate executive crisis reports powered by AI." />
-        <GlassCard className="border-red-500/20 bg-gradient-to-r from-red-950/30 to-red-900/20 p-8">
+        <GlassCard className="border-red-500/20 bg-gradient-to-r from-red-950/30 to-red-900/20 p-8" data-testid="analysis-failed-card">
           <div className="flex items-start gap-4">
             <div className="rounded-xl bg-red-500/20 p-3 border border-red-500/30">
               <AlertTriangle size={24} className="text-red-400" />
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold text-red-300">Analysis Failed</h3>
-              <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap">{error}</p>
+              <p className="mt-2 text-sm text-slate-300 whitespace-pre-wrap max-h-48 overflow-y-auto" data-testid="error-message">{error}</p>
               <div className="mt-6 flex gap-3">
                 <button
                   onClick={() => setError(null)}
+                  data-testid="dismiss-error-btn"
                   className="rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.08]"
                 >
                   Dismiss
                 </button>
                 <button
                   onClick={handleAnalyze}
+                  data-testid="try-again-btn"
                   className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl"
                 >
                   <RefreshCw size={16} />
@@ -255,6 +269,7 @@ export default function Analysis() {
         <button
           disabled={loading || !provider || items.length === 0}
           onClick={handleAnalyze}
+          data-testid="start-analysis-btn"
           className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/40 disabled:opacity-50"
         >
           <Sparkles size={24} className="transition-transform group-hover:rotate-12" />
