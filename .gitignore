@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Security - prevent secret leaks
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
+test_reports/
+memory/test_credentials.md
+*.json.bak
