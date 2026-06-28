@@ -218,108 +218,63 @@ async function testGroqConnection(
   };
 }
 
-// Ollama - supports both cloud API (with key) and local server
+// Ollama - local server only (cloud API blocked by CORS)
 async function testOllamaConnection(
   apiKey: string,
-  baseUrl: string = "https://ollama.com/api",
+  baseUrl: string = "http://localhost:11434",
   startTime: number
 ): Promise<TestConnectionResult> {
-  const isCloudApi = baseUrl.includes("ollama.com") || apiKey?.length > 0;
-  
-  // For cloud API, use the models endpoint with auth
-  if (isCloudApi) {
-    const cloudUrl = baseUrl.includes("ollama.com") ? "https://ollama.com/api" : baseUrl;
-    
-    try {
-      const response = await fetch(`${cloudUrl}/tags`, {
-        headers: apiKey ? {
-          "Authorization": `Bearer ${apiKey}`,
-        } : {},
-      });
+  // Local server mode
+  try {
+    const response = await fetch(`${baseUrl}/api/tags`);
 
-      const responseTime = Math.round(performance.now() - startTime);
+    const responseTime = Math.round(performance.now() - startTime);
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        return {
-          success: false,
-          status: response.status === 401 || response.status === 403 ? "invalid" : "unreachable",
-          responseTime,
-          errorMessage: error.error?.message || `HTTP ${response.status}`,
-        };
-      }
-
-      const data = await response.json();
-      // Cloud API returns models array
-      const modelsArray = data.models || data || [];
-      const models: ProviderModel[] = (Array.isArray(modelsArray) ? modelsArray : []).map((m: any) => ({
-        id: m.name || m.model || m.id,
-        name: m.name || m.model || m.id,
-        description: m.details?.family || m.description || "",
-        isDefault: (m.name || m.model || "").includes("llama3"),
-      }));
-
-      // If no models returned, provide some defaults
-      if (models.length === 0) {
-        return {
-          success: true,
-          status: "connected",
-          responseTime,
-          models: [
-            { id: "llama3.2", name: "Llama 3.2", isDefault: true },
-            { id: "llama3.1", name: "Llama 3.1", isDefault: false },
-            { id: "gemma2", name: "Gemma 2", isDefault: false },
-            { id: "qwen2.5", name: "Qwen 2.5", isDefault: false },
-            { id: "mistral", name: "Mistral", isDefault: false },
-          ],
-        };
-      }
-
-      return {
-        success: true,
-        status: "connected",
-        responseTime,
-        models,
-      };
-    } catch (error) {
-      const responseTime = Math.round(performance.now() - startTime);
+    if (!response.ok) {
       return {
         success: false,
         status: "unreachable",
         responseTime,
-        errorMessage: error instanceof Error ? error.message : "Failed to connect to Ollama Cloud",
+        errorMessage: `Ollama server returned HTTP ${response.status}. Make sure Ollama is running locally.`,
       };
     }
-  }
 
-  // Local server mode
-  const response = await fetch(`${baseUrl}/api/tags`);
+    const data = await response.json();
+    const models: ProviderModel[] = (data.models || []).map((m: any) => ({
+      id: m.name,
+      name: m.name,
+      description: `${m.details?.family || ""} ${m.details?.parameter_size || ""}`.trim(),
+      isDefault: m.name.includes("llama3"),
+    }));
 
-  const responseTime = Math.round(performance.now() - startTime);
+    if (models.length === 0) {
+      return {
+        success: false,
+        status: "connected",
+        responseTime,
+        errorMessage: "Ollama is running but no models are installed. Run 'ollama pull llama3.2' to install a model.",
+      };
+    }
 
-  if (!response.ok) {
+    return {
+      success: true,
+      status: "connected",
+      responseTime,
+      models,
+    };
+  } catch (error) {
+    const responseTime = Math.round(performance.now() - startTime);
+    const errorMsg = error instanceof Error ? error.message : "Connection failed";
+    
     return {
       success: false,
       status: "unreachable",
       responseTime,
-      errorMessage: `Ollama server returned HTTP ${response.status}`,
+      errorMessage: errorMsg.includes("Failed to fetch") 
+        ? "Cannot connect to Ollama. Make sure Ollama is running locally on port 11434."
+        : errorMsg,
     };
   }
-
-  const data = await response.json();
-  const models: ProviderModel[] = (data.models || []).map((m: any) => ({
-    id: m.name,
-    name: m.name,
-    description: `${m.details?.family || ""} ${m.details?.parameter_size || ""}`.trim(),
-    isDefault: m.name.includes("llama3"),
-  }));
-
-  return {
-    success: true,
-    status: "connected",
-    responseTime,
-    models,
-  };
 }
 
 // Get the best available provider based on priority and connection status
