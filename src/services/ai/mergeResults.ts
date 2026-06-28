@@ -49,12 +49,16 @@ export async function mergeAnalysisResults(
       )
     );
 
-  const severity =
+  const matchingResult =
     results.find(
       (result: any) =>
         result.severityScore ===
         severityScore
-    )?.severity ?? "Low";
+    ) as any;
+
+  const severity = matchingResult?.severity ?? "Low";
+
+  const firstResult = results[0] as any;
 
   return AnalysisSchema.parse({
     executiveSummary,
@@ -68,12 +72,12 @@ export async function mergeAnalysisResults(
     jiraTickets,
 
     customerEmail:
-      results[0].customerEmail,
+      firstResult.customerEmail,
 
     statusPageUpdate:
-      results[0].statusPageUpdate,
+      firstResult.statusPageUpdate,
 
     socialMediaUpdate:
-      results[0].socialMediaUpdate,
+      firstResult.socialMediaUpdate,
   });
 }
