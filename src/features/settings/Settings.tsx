@@ -59,7 +59,9 @@ function StatusBadge({ status, responseTime }: { status: ConnectionStatus; respo
     unreachable: { icon: WifiOff, label: "Unreachable", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
   };
 
-  const { icon: Icon, label, color } = config[status];
+  // Default to 'idle' if status is undefined or not in config
+  const statusConfig = config[status] ?? config.idle;
+  const { icon: Icon, label, color } = statusConfig;
 
   return (
     <div className={clsx("flex items-center gap-2 rounded-lg border px-3 py-1.5", color)}>

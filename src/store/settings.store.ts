@@ -169,17 +169,20 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: "signaldesk-settings",
-      // Migrate old data to ensure availableModels array exists
+      // Migrate old data to ensure all required fields exist
       migrate: (persistedState: any, version: number) => {
         if (persistedState?.providers) {
           persistedState.providers = persistedState.providers.map((p: any) => ({
             ...p,
             availableModels: p.availableModels ?? [],
+            connectionStatus: p.connectionStatus ?? "idle",
+            enabled: p.enabled ?? true,
+            priority: p.priority ?? 1,
           }));
         }
         return persistedState;
       },
-      version: 1,
+      version: 2,
     }
   )
 );
