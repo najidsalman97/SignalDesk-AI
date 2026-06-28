@@ -1,16 +1,6 @@
 import { useSettingsStore } from "@/store/settings.store";
+import type { ProviderSettings } from "@/shared/types/provider";
 
-export function getActiveProvider() {
-  const providers =
-    useSettingsStore.getState().providers;
-
-  const active =
-    providers.find((p) => p.enabled);
-
-  if (!active)
-    throw new Error(
-      "No AI Provider Configured"
-    );
-
-  return active;
+export function getActiveProvider(): ProviderSettings | null {
+  return useSettingsStore.getState().getActiveProvider();
 }

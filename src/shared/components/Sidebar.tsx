@@ -8,6 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  ExternalLink,
+  Zap,
 } from "lucide-react";
 
 import { NavLink } from "react-router-dom";
@@ -16,6 +18,7 @@ import clsx from "clsx";
 
 import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
+import { useSettingsStore } from "@/store/settings.store";
 
 const navItems = [
   {
@@ -25,76 +28,71 @@ const navItems = [
   },
   {
     label: "Sources",
+    description: "Import Reviews",
     icon: Database,
     path: "/sources",
     step: 1,
   },
   {
     label: "Analysis",
+    description: "AI Processing",
     icon: BrainCircuit,
     path: "/analysis",
     step: 2,
   },
   {
-    label: "Insights",
-    icon: BarChart3,
-    path: "/insights",
-  },
-  {
     label: "Reports",
+    description: "Export & Share",
     icon: FileText,
     path: "/reports",
     step: 3,
   },
+  {
+    label: "Insights",
+    description: "Deep Dive",
+    icon: BarChart3,
+    path: "/insights",
+  },
 ];
-
-const settingsItem = {
-  label: "Settings",
-  icon: Settings,
-  path: "/settings",
-};
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { items } = useReviewStore();
   const { result } = useAnalysisStore();
+  const { providers } = useSettingsStore();
 
+  const activeProvider = providers.find((p) => p.enabled);
   const hasReviews = items.length > 0;
   const hasAnalysis = result !== null;
 
   return (
     <aside
       className={clsx(
-        "flex flex-col border-r bg-background transition-all duration-300",
+        "relative flex flex-col border-r border-white/[0.06] transition-all duration-300",
+        "bg-gradient-to-b from-[#0a0f1a]/90 to-[#080d18]/95 backdrop-blur-xl",
         collapsed ? "w-20" : "w-72"
       )}
     >
-      {/* Header */}
-      <div className="flex h-20 items-center justify-between border-b px-5">
+      {/* Logo */}
+      <div className="flex h-20 items-center gap-3 border-b border-white/[0.06] px-5">
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
+          <Sparkles size={22} className="text-white" />
+          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent" />
+        </div>
+        
         {!collapsed && (
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Sparkles size={20} className="text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="font-bold">SignalDesk</h1>
-              <p className="text-xs text-muted-foreground">AI Crisis Intel</p>
-            </div>
-          </div>
-        )}
-
-        {collapsed && (
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Sparkles size={20} className="text-primary-foreground" />
+          <div className="flex flex-col">
+            <h1 className="font-bold text-white tracking-tight">SignalDesk</h1>
+            <span className="text-[11px] text-indigo-300/70 font-medium">AI Crisis Intel</span>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-3">
+      <nav className="flex-1 space-y-1.5 p-3 pt-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const showBadge =
+          const isComplete =
             (item.path === "/sources" && hasReviews) ||
             (item.path === "/analysis" && hasAnalysis) ||
             (item.path === "/reports" && hasAnalysis);
@@ -105,25 +103,55 @@ export default function Sidebar() {
               to={item.path}
               className={({ isActive }) =>
                 clsx(
-                  "group flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200",
+                  "group relative flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all duration-200",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "hover:bg-accent"
+                    ? "bg-gradient-to-r from-indigo-600/20 to-purple-600/10 text-white shadow-lg shadow-indigo-500/10"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 )
               }
             >
-              <Icon size={20} className="shrink-0" />
-
-              {!collapsed && (
+              {({ isActive }) => (
                 <>
-                  <span className="flex-1 font-medium">{item.label}</span>
-                  {item.step && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground group-[.bg-primary]:bg-primary-foreground/20 group-[.bg-primary]:text-primary-foreground">
-                      {item.step}
-                    </span>
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b from-indigo-400 to-purple-500" />
                   )}
-                  {showBadge && !item.step && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  
+                  {/* Step number or icon */}
+                  {item.step ? (
+                    <div className={clsx(
+                      "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition-all",
+                      isActive 
+                        ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/30"
+                        : isComplete
+                        ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                        : "bg-white/[0.06] text-slate-500"
+                    )}>
+                      {isComplete && !isActive ? "✓" : item.step}
+                    </div>
+                  ) : (
+                    <div className={clsx(
+                      "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
+                      isActive 
+                        ? "bg-gradient-to-br from-indigo-500/30 to-purple-500/20"
+                        : "bg-white/[0.04]"
+                    )}>
+                      <Icon size={18} className={isActive ? "text-indigo-300" : ""} />
+                    </div>
+                  )}
+
+                  {!collapsed && (
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-sm">{item.label}</span>
+                      {item.description && (
+                        <p className="text-[11px] text-slate-500 truncate">{item.description}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Arrow indicator on hover */}
+                  {!collapsed && isActive && (
+                    <ChevronRight size={16} className="text-indigo-400/60" />
                   )}
                 </>
               )}
@@ -132,39 +160,63 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Settings at bottom */}
-      <div className="border-t p-3">
+      {/* Bottom Section */}
+      <div className="border-t border-white/[0.06] p-3 space-y-2">
+        {/* AI Provider Status */}
+        {!collapsed && (
+          <div className="rounded-xl bg-gradient-to-r from-indigo-950/50 to-purple-950/30 p-3.5 border border-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/20">
+                <Zap size={18} className="text-cyan-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white">AI Provider</span>
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
+                <p className="text-xs text-slate-400 truncate capitalize">
+                  {activeProvider?.provider ?? "Not configured"}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings */}
         <NavLink
-          to={settingsItem.path}
+          to="/settings"
           className={({ isActive }) =>
             clsx(
-              "flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200",
+              "flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all duration-200",
               isActive
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-accent"
+                ? "bg-white/[0.08] text-white"
+                : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
             )
           }
         >
-          <Settings size={20} className="shrink-0" />
-          {!collapsed && (
-            <span className="font-medium">{settingsItem.label}</span>
-          )}
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04]">
+            <Settings size={18} />
+          </div>
+          {!collapsed && <span className="text-sm font-medium">Settings</span>}
         </NavLink>
 
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 text-sm text-slate-500 transition-all hover:bg-white/[0.04] hover:text-white"
         >
-          {collapsed ? (
-            <ChevronRight size={16} />
-          ) : (
-            <>
-              <ChevronLeft size={16} />
-              <span>Collapse</span>
-            </>
-          )}
+          {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
         </button>
+
+        {/* Help link */}
+        {!collapsed && (
+          <div className="pt-2 flex items-center justify-between px-1 text-xs text-slate-600">
+            <span>Need Help?</span>
+            <a href="#" className="flex items-center gap-1 text-slate-500 hover:text-indigo-400 transition-colors">
+              View Documentation <ExternalLink size={10} />
+            </a>
+          </div>
+        )}
       </div>
     </aside>
   );

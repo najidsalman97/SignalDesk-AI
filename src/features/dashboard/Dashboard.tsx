@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BarChart3,
   BrainCircuit,
+  ChevronRight,
   Clock,
   FileText,
   Sparkles,
@@ -11,71 +12,43 @@ import {
   TrendingUp,
   Upload,
   Users,
+  Zap,
 } from "lucide-react";
 import clsx from "clsx";
 
-import MetricCard from "@/shared/components/MetricCard";
-import PageHeader from "@/shared/components/PageHeader";
 import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
 import { useSettingsStore } from "@/store/settings.store";
 
-const severityColors = {
-  Low: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-  Medium: "bg-amber-500/10 text-amber-600 border-amber-500/20",
-  High: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  Critical: "bg-red-500/10 text-red-600 border-red-500/20",
+const severityConfig = {
+  Low: { bg: "from-emerald-500/20 to-emerald-600/10", text: "text-emerald-400", border: "border-emerald-500/30" },
+  Medium: { bg: "from-amber-500/20 to-amber-600/10", text: "text-amber-400", border: "border-amber-500/30" },
+  High: { bg: "from-orange-500/20 to-orange-600/10", text: "text-orange-400", border: "border-orange-500/30" },
+  Critical: { bg: "from-red-500/20 to-red-600/10", text: "text-red-400", border: "border-red-500/30" },
 };
 
-const severityBadgeColors = {
-  Low: "bg-emerald-500",
-  Medium: "bg-amber-500",
-  High: "bg-orange-500",
-  Critical: "bg-red-500",
-};
-
-function SeverityBadge({ severity }: { severity: string }) {
+function GlassCard({ children, className, hover = false }: { children: React.ReactNode; className?: string; hover?: boolean }) {
   return (
-    <span
-      className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide",
-        severityColors[severity as keyof typeof severityColors] ||
-          severityColors.Low
-      )}
-    >
-      <span
-        className={clsx(
-          "h-1.5 w-1.5 rounded-full",
-          severityBadgeColors[severity as keyof typeof severityBadgeColors] ||
-            severityBadgeColors.Low
-        )}
-      />
-      {severity}
-    </span>
+    <div className={clsx(
+      "rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl",
+      hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-white/[0.12]",
+      className
+    )}>
+      {children}
+    </div>
   );
 }
 
-function SeverityMeter({ score }: { score: number }) {
-  const getColor = () => {
-    if (score >= 80) return "bg-red-500";
-    if (score >= 60) return "bg-orange-500";
-    if (score >= 40) return "bg-amber-500";
-    return "bg-emerald-500";
-  };
-
+function SeverityBadge({ severity }: { severity: string }) {
+  const config = severityConfig[severity as keyof typeof severityConfig] || severityConfig.Low;
   return (
-    <div className="space-y-2">
-      <div className="flex items-end justify-between">
-        <span className="text-4xl font-bold tracking-tight">{score}</span>
-        <span className="pb-0.5 text-sm text-muted-foreground">/100</span>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={clsx("h-full rounded-full transition-all duration-700", getColor())}
-          style={{ width: `${score}%` }}
-        />
-      </div>
-    </div>
+    <span className={clsx(
+      "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide",
+      `bg-gradient-to-r ${config.bg} ${config.text} ${config.border}`
+    )}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {severity}
+    </span>
   );
 }
 
@@ -88,274 +61,334 @@ export default function Dashboard() {
   const hasReviews = items.length > 0;
   const hasAnalysis = result !== null;
 
-  // Empty state - no reviews imported
+  // Empty state - no reviews
   if (!hasReviews && !hasAnalysis) {
     return (
-      <div className="space-y-10" data-testid="dashboard-empty">
-        <PageHeader
-          title="Dashboard"
-          description="Monitor customer feedback, incidents and AI powered insights."
-        />
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
+        </div>
 
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed py-20">
-          <div className="rounded-full bg-primary/10 p-6">
-            <Upload size={40} className="text-primary" />
+        <GlassCard className="flex flex-col items-center justify-center py-20">
+          <div className="rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 p-6 border border-indigo-500/20">
+            <Upload size={40} className="text-indigo-400" />
           </div>
-          <h2 className="mt-8 text-2xl font-bold">Get Started with SignalDesk</h2>
-          <p className="mt-3 max-w-md text-center text-muted-foreground">
+          <h2 className="mt-8 text-2xl font-bold text-white">Get Started with SignalDesk</h2>
+          <p className="mt-3 max-w-md text-center text-slate-400">
             Import customer reviews from CSV, Excel, JSON, or paste them directly.
             Then let AI analyze the feedback and generate actionable insights.
           </p>
-          <Link
-            to="/sources"
-            data-testid="go-to-sources-btn"
-            className="mt-8 flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-lg"
-          >
+          <Link to="/sources" className="mt-8 flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30">
             <Upload size={20} />
             Import Reviews
             <ArrowRight size={18} />
           </Link>
-        </div>
+        </GlassCard>
       </div>
     );
   }
 
-  // Reviews imported but no analysis yet
+  // Reviews but no analysis
   if (hasReviews && !hasAnalysis) {
     return (
-      <div className="space-y-10" data-testid="dashboard-no-analysis">
-        <PageHeader
-          title="Dashboard"
-          description="Monitor customer feedback, incidents and AI powered insights."
-        />
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <MetricCard
-            title="Reviews Imported"
-            value={items.length}
-            subtitle={`From ${importedFiles} file${importedFiles !== 1 ? "s" : ""}`}
-            icon={BarChart3}
-            color="text-blue-500"
-          />
-          <MetricCard
-            title="AI Provider"
-            value={activeProvider?.provider ?? "Not configured"}
-            subtitle={activeProvider?.model || "Go to Settings"}
-            icon={BrainCircuit}
-            color="text-violet-500"
-          />
-          <MetricCard
-            title="Analysis Status"
-            value="Pending"
-            subtitle="Ready for analysis"
-            icon={Clock}
-            color="text-amber-500"
-          />
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
         </div>
 
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed py-16">
-          <div className="rounded-full bg-violet-500/10 p-6">
-            <Sparkles size={40} className="text-violet-500" />
+        <div className="grid gap-5 md:grid-cols-3">
+          <GlassCard hover className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Reviews Imported</p>
+                <p className="mt-2 text-3xl font-bold text-white">{items.length}</p>
+                <p className="mt-1 text-xs text-slate-500">From {importedFiles} file{importedFiles !== 1 ? "s" : ""}</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20">
+                <BarChart3 size={22} className="text-blue-400" />
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard hover className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">AI Provider</p>
+                <p className="mt-2 text-2xl font-bold text-white capitalize">{activeProvider?.provider ?? "Not configured"}</p>
+                <p className="mt-1 text-xs text-slate-500">{activeProvider?.model || "Go to Settings"}</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20">
+                <BrainCircuit size={22} className="text-purple-400" />
+              </div>
+            </div>
+          </GlassCard>
+
+          <GlassCard hover className="p-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Analysis Status</p>
+                <p className="mt-2 text-2xl font-bold text-amber-400">Pending</p>
+                <p className="mt-1 text-xs text-slate-500">Ready for analysis</p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20">
+                <Clock size={22} className="text-amber-400" />
+              </div>
+            </div>
+          </GlassCard>
+        </div>
+
+        <GlassCard className="flex flex-col items-center justify-center py-16">
+          <div className="rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 p-6 border border-violet-500/20">
+            <Sparkles size={40} className="text-violet-400" />
           </div>
-          <h2 className="mt-8 text-2xl font-bold">Ready to Analyze</h2>
-          <p className="mt-3 max-w-md text-center text-muted-foreground">
+          <h2 className="mt-8 text-2xl font-bold text-white">Ready to Analyze</h2>
+          <p className="mt-3 max-w-md text-center text-slate-400">
             You have {items.length} reviews imported. Run AI analysis to discover
             issues, generate Jira tickets, and create customer communications.
           </p>
-          <Link
-            to="/analysis"
-            data-testid="go-to-analysis-btn"
-            className="mt-8 flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-lg"
-          >
+          <Link to="/analysis" className="mt-8 flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30">
             <BrainCircuit size={20} />
             Start AI Analysis
             <ArrowRight size={18} />
           </Link>
-        </div>
+        </GlassCard>
       </div>
     );
   }
 
-  // Has analysis results - show full dashboard
-  const criticalIssues = result!.topIssues.filter(
-    (i) => i.severity === "Critical"
-  ).length;
-  const highIssues = result!.topIssues.filter(
-    (i) => i.severity === "High"
-  ).length;
+  // Full dashboard with analysis
+  const criticalIssues = result!.topIssues.filter(i => i.severity === "Critical").length;
+  const highIssues = result!.topIssues.filter(i => i.severity === "High").length;
 
   return (
-    <div className="space-y-10" data-testid="dashboard-with-analysis">
-      <PageHeader
-        title="Dashboard"
-        description="Monitor customer feedback, incidents and AI powered insights."
-      />
+    <div className="space-y-8">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
+        </div>
+        <Link to="/reports" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl">
+          <FileText size={18} />
+          Export Reports
+        </Link>
+      </div>
 
-      {/* Primary KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Reviews Imported"
-          value={items.length}
-          subtitle={`From ${importedFiles} file${importedFiles !== 1 ? "s" : ""}`}
-          icon={BarChart3}
-          color="text-blue-500"
-        />
-
-        <div className="rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" data-testid="kpi-severity">
+      {/* Primary KPIs */}
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <GlassCard hover className="p-5">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Overall Severity</p>
-              <div className="mt-3">
-                <SeverityBadge severity={result!.severity} />
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Reviews Analyzed</p>
+              <p className="mt-2 text-4xl font-bold text-white">{items.length}</p>
+              <p className="mt-1 text-xs text-slate-500">From {importedFiles} file{importedFiles !== 1 ? "s" : ""}</p>
+              <div className="mt-3 h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full w-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" />
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {criticalIssues} critical, {highIssues} high
-              </p>
             </div>
-            <div className="rounded-xl bg-muted p-3 text-orange-500">
-              <AlertTriangle size={24} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20">
+              <Users size={22} className="text-blue-400" />
             </div>
           </div>
-        </div>
+        </GlassCard>
 
-        <div className="rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl" data-testid="kpi-severity-score">
+        <GlassCard hover className="p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Overall Severity</p>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className={clsx(
+                  "text-3xl font-bold",
+                  result!.severity === "Critical" ? "text-red-400" :
+                  result!.severity === "High" ? "text-orange-400" :
+                  result!.severity === "Medium" ? "text-amber-400" : "text-emerald-400"
+                )}>{result!.severity}</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">{criticalIssues} critical, {highIssues} high</p>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
+              <AlertTriangle size={22} className="text-orange-400" />
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard hover className="p-5">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Severity Score</p>
-              <div className="mt-2">
-                <SeverityMeter score={result!.severityScore} />
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Severity Score</p>
+              <div className="mt-2 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-white">{result!.severityScore}</span>
+                <span className="text-lg text-slate-500">/100</span>
+              </div>
+              <div className="mt-3 h-2 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                <div 
+                  className={clsx("h-full rounded-full transition-all duration-700",
+                    result!.severityScore >= 80 ? "bg-gradient-to-r from-red-500 to-red-400" :
+                    result!.severityScore >= 60 ? "bg-gradient-to-r from-orange-500 to-orange-400" :
+                    result!.severityScore >= 40 ? "bg-gradient-to-r from-amber-500 to-amber-400" :
+                    "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                  )}
+                  style={{ width: `${result!.severityScore}%` }}
+                />
               </div>
             </div>
-            <div className="rounded-xl bg-muted p-3 text-red-500">
-              <TrendingUp size={24} />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/20">
+              <TrendingUp size={22} className="text-cyan-400" />
             </div>
           </div>
-        </div>
+        </GlassCard>
 
-        <MetricCard
-          title="AI Provider"
-          value={activeProvider?.provider ?? "—"}
-          subtitle={activeProvider?.model || ""}
-          icon={BrainCircuit}
-          color="text-violet-500"
-        />
+        <GlassCard hover className="p-5">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">AI Provider</p>
+              <p className="mt-2 text-2xl font-bold text-white capitalize">{activeProvider?.provider ?? "—"}</p>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs text-emerald-400">Active</span>
+              </div>
+            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20">
+              <Sparkles size={22} className="text-purple-400" />
+            </div>
+          </div>
+        </GlassCard>
       </div>
 
-      {/* Secondary Metrics */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <MetricCard
-          title="Top Issues"
-          value={result!.topIssues.length}
-          subtitle="Issues identified"
-          icon={AlertTriangle}
-          color="text-orange-500"
-        />
-        <MetricCard
-          title="Jira Tickets"
-          value={result!.jiraTickets.length}
-          subtitle="Ready to create"
-          icon={TicketCheck}
-          color="text-violet-500"
-        />
-        <MetricCard
-          title="Reports"
-          value="1"
-          subtitle="Analysis complete"
-          icon={FileText}
-          color="text-emerald-500"
-        />
+      {/* Secondary metrics */}
+      <div className="grid gap-5 md:grid-cols-3">
+        <GlassCard hover className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
+                <AlertTriangle size={18} className="text-orange-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{result!.topIssues.length}</p>
+                <p className="text-xs text-slate-500">Top Issues</p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard hover className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 border border-violet-500/20">
+                <TicketCheck size={18} className="text-violet-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">{result!.jiraTickets.length}</p>
+                <p className="text-xs text-slate-500">Jira Tickets</p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
+
+        <GlassCard hover className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/10 border border-emerald-500/20">
+                <FileText size={18} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-white">1</p>
+                <p className="text-xs text-slate-500">Reports Ready</p>
+              </div>
+            </div>
+          </div>
+        </GlassCard>
       </div>
 
-      {/* Executive Summary */}
-      <div className="rounded-2xl border bg-card p-6" data-testid="executive-summary-preview">
-        <div className="flex items-center justify-between">
+      {/* Two Column */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Executive Summary */}
+        <GlassCard className="lg:col-span-3 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20">
+                <FileText size={20} className="text-indigo-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Executive Summary</h3>
+            </div>
+            <Link to="/analysis" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+              View Full Analysis <ArrowRight size={14} />
+            </Link>
+          </div>
+          <p className="text-slate-300 leading-relaxed line-clamp-4">{result!.executiveSummary}</p>
+        </GlassCard>
+
+        {/* Quick Actions */}
+        <GlassCard className="lg:col-span-2 p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/20">
+              <Zap size={20} className="text-amber-400" />
+            </div>
+            <h3 className="font-semibold text-white">Quick Actions</h3>
+          </div>
+          
+          <div className="space-y-2">
+            {[
+              { label: "View Full Analysis", to: "/analysis", icon: BrainCircuit },
+              { label: "Export Reports", to: "/reports", icon: FileText },
+              { label: "Import More Reviews", to: "/sources", icon: Upload },
+            ].map((action, i) => (
+              <Link key={i} to={action.to} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04] hover:border-white/[0.1] group">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.06]">
+                    <action.icon size={16} className="text-slate-400" />
+                  </div>
+                  <span className="font-medium text-white text-sm">{action.label}</span>
+                </div>
+                <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Top Issues Preview */}
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2.5">
-              <FileText size={20} className="text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
+              <AlertTriangle size={20} className="text-orange-400" />
             </div>
-            <h3 className="text-lg font-semibold">Executive Summary</h3>
+            <h3 className="text-lg font-semibold text-white">Top Issues</h3>
           </div>
-          <Link
-            to="/analysis"
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            View Full Analysis
-            <ArrowRight size={16} />
+          <Link to="/analysis" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+            View All {result!.topIssues.length} Issues <ChevronRight size={14} />
           </Link>
         </div>
-        <p className="mt-4 line-clamp-3 text-muted-foreground">
-          {result!.executiveSummary}
-        </p>
-      </div>
-
-      {/* Top 3 Issues */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Top Issues</h3>
-          <Link
-            to="/analysis"
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            View All {result!.topIssues.length} Issues
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3" data-testid="top-issues-preview">
+        
+        <div className="grid gap-4 md:grid-cols-3">
           {result!.topIssues.slice(0, 3).map((issue, index) => (
-            <div
-              key={index}
-              className="rounded-2xl border bg-card p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-            >
-              <div className="flex items-start justify-between gap-3">
+            <div key={index} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:bg-white/[0.04]">
+              <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-muted text-sm font-bold">
+                  <span className={clsx(
+                    "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold",
+                    issue.severity === "Critical" ? "bg-red-500/20 text-red-400" :
+                    issue.severity === "High" ? "bg-orange-500/20 text-orange-400" :
+                    issue.severity === "Medium" ? "bg-amber-500/20 text-amber-400" :
+                    "bg-emerald-500/20 text-emerald-400"
+                  )}>
                     {index + 1}
                   </span>
-                  <h4 className="font-semibold line-clamp-1">{issue.title}</h4>
+                  <h4 className="font-semibold text-white text-sm line-clamp-1">{issue.title}</h4>
                 </div>
-                <SeverityBadge severity={issue.severity} />
               </div>
-              <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-                {issue.description}
-              </p>
-              <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Users size={12} />
-                  {issue.affectedCount} affected
-                </span>
+              <SeverityBadge severity={issue.severity} />
+              <p className="mt-3 text-sm text-slate-400 line-clamp-2">{issue.description}</p>
+              <div className="mt-3 flex items-center gap-1 text-xs text-slate-500">
+                <Users size={12} />
+                {issue.affectedCount} affected
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="flex flex-wrap gap-4">
-        <Link
-          to="/analysis"
-          className="flex items-center gap-2 rounded-xl border px-4 py-2.5 font-medium transition-colors hover:bg-accent"
-        >
-          <BrainCircuit size={18} />
-          View Full Analysis
-        </Link>
-        <Link
-          to="/reports"
-          data-testid="go-to-reports-btn"
-          className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-lg"
-        >
-          <FileText size={18} />
-          Export Reports
-          <ArrowRight size={16} />
-        </Link>
-        <Link
-          to="/sources"
-          className="flex items-center gap-2 rounded-xl border px-4 py-2.5 font-medium transition-colors hover:bg-accent"
-        >
-          <Upload size={18} />
-          Import More Reviews
-        </Link>
-      </div>
+      </GlassCard>
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-import PageHeader from "@/shared/components/PageHeader";
 import { useAnalysisStore } from "@/store/analysis.store";
 import { useReviewStore } from "@/store/review.store";
 import type { AnalysisResult } from "@/shared/types/analysis";
@@ -359,24 +358,24 @@ export default function Reports() {
   if (!result) {
     return (
       <div className="space-y-10" data-testid="reports-empty">
-        <PageHeader
-          title="Reports"
-          description="Export analysis results in multiple formats."
-        />
+        <div>
+          <h1 className="text-3xl font-bold text-white">Reports</h1>
+          <p className="mt-2 text-slate-400">Export analysis results in multiple formats.</p>
+        </div>
 
-        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed py-20">
-          <div className="rounded-full bg-primary/10 p-6">
-            <FileText size={40} className="text-primary" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl py-20">
+          <div className="rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 p-6 border border-indigo-500/20">
+            <FileText size={40} className="text-indigo-400" />
           </div>
-          <h2 className="mt-8 text-2xl font-bold">No Analysis to Export</h2>
-          <p className="mt-3 max-w-md text-center text-muted-foreground">
+          <h2 className="mt-8 text-2xl font-bold text-white">No Analysis to Export</h2>
+          <p className="mt-3 max-w-md text-center text-slate-400">
             Run AI analysis first to generate reports. You'll be able to export
             executive summaries, Jira tickets, and customer communications.
           </p>
           <Link
             to="/analysis"
             data-testid="go-to-analysis-btn"
-            className="mt-8 flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 font-semibold text-primary-foreground transition-all hover:scale-[1.02] hover:shadow-lg"
+            className="mt-8 flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl"
           >
             <BrainCircuit size={20} />
             Go to Analysis
@@ -390,30 +389,30 @@ export default function Reports() {
   // Has analysis - show export options
   return (
     <div className="space-y-10" data-testid="reports-ready">
-      <PageHeader
-        title="Reports"
-        description="Export analysis results in multiple formats."
-      />
+      <div>
+        <h1 className="text-3xl font-bold text-white">Reports</h1>
+        <p className="mt-2 text-slate-400">Export analysis results in multiple formats.</p>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <div className="group rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="group rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-500/5 hover:border-white/[0.12]">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-blue-500/10 p-3">
-              <FileType size={24} className="text-blue-500" />
+            <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20 p-3">
+              <FileType size={24} className="text-blue-400" />
             </div>
             <div>
-              <h3 className="font-semibold">Markdown</h3>
-              <p className="text-sm text-muted-foreground">For documentation</p>
+              <h3 className="font-semibold text-white">Markdown</h3>
+              <p className="text-sm text-slate-500">For documentation</p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-slate-400">
             Export as formatted Markdown for wikis, Notion, or GitHub.
           </p>
           <button
             onClick={handleExportMarkdown}
             disabled={exporting !== null}
             data-testid="export-markdown-btn"
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 font-medium transition-colors hover:bg-accent disabled:opacity-50"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.02] py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.06] disabled:opacity-50"
           >
             {exporting === "markdown" ? (
               <Loader2 size={18} className="animate-spin" />
@@ -424,24 +423,24 @@ export default function Reports() {
           </button>
         </div>
 
-        <div className="group rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="group rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/5 hover:border-white/[0.12]">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-amber-500/10 p-3">
-              <FileJson size={24} className="text-amber-500" />
+            <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20 p-3">
+              <FileJson size={24} className="text-amber-400" />
             </div>
             <div>
-              <h3 className="font-semibold">JSON</h3>
-              <p className="text-sm text-muted-foreground">For integrations</p>
+              <h3 className="font-semibold text-white">JSON</h3>
+              <p className="text-sm text-slate-500">For integrations</p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-slate-400">
             Export structured data for APIs, automation, or further processing.
           </p>
           <button
             onClick={handleExportJSON}
             disabled={exporting !== null}
             data-testid="export-json-btn"
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 font-medium transition-colors hover:bg-accent disabled:opacity-50"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.02] py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.06] disabled:opacity-50"
           >
             {exporting === "json" ? (
               <Loader2 size={18} className="animate-spin" />
@@ -452,24 +451,24 @@ export default function Reports() {
           </button>
         </div>
 
-        <div className="group rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+        <div className="group rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/5 hover:border-white/[0.12]">
           <div className="flex items-center gap-4">
-            <div className="rounded-xl bg-red-500/10 p-3">
-              <FileText size={24} className="text-red-500" />
+            <div className="rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20 p-3">
+              <FileText size={24} className="text-red-400" />
             </div>
             <div>
-              <h3 className="font-semibold">PDF</h3>
-              <p className="text-sm text-muted-foreground">For stakeholders</p>
+              <h3 className="font-semibold text-white">PDF</h3>
+              <p className="text-sm text-slate-500">For stakeholders</p>
             </div>
           </div>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-slate-400">
             Professional report for executives, meetings, and presentations.
           </p>
           <button
             onClick={handleExportPDF}
             disabled={exporting !== null}
             data-testid="export-pdf-btn"
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 font-medium transition-colors hover:bg-accent disabled:opacity-50"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.02] py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.06] disabled:opacity-50"
           >
             {exporting === "pdf" ? (
               <Loader2 size={18} className="animate-spin" />
@@ -482,39 +481,39 @@ export default function Reports() {
       </div>
 
       {/* Summary of what will be exported */}
-      <div className="rounded-2xl border bg-card p-6">
-        <h3 className="font-semibold">Export Contents</h3>
+      <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl p-6">
+        <h3 className="font-semibold text-white">Export Contents</h3>
         <div className="mt-4 grid gap-3 text-sm md:grid-cols-2 lg:grid-cols-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-500" />
+          <div className="flex items-center gap-2 text-slate-300">
+            <CheckCircle2 size={16} className="text-emerald-400" />
             Executive Summary
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-500" />
+          <div className="flex items-center gap-2 text-slate-300">
+            <CheckCircle2 size={16} className="text-emerald-400" />
             {result.topIssues.length} Top Issues
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-500" />
+          <div className="flex items-center gap-2 text-slate-300">
+            <CheckCircle2 size={16} className="text-emerald-400" />
             {result.jiraTickets.length} Jira Tickets
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-500" />
+          <div className="flex items-center gap-2 text-slate-300">
+            <CheckCircle2 size={16} className="text-emerald-400" />
             Customer Communications
           </div>
         </div>
       </div>
 
       {/* Quick navigation */}
-      <div className="flex items-center justify-between rounded-2xl border bg-muted/30 p-6">
+      <div className="flex items-center justify-between rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-950/30 to-cyan-950/20 p-6">
         <div>
-          <h3 className="font-semibold">All done!</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-semibold text-white">All done!</h3>
+          <p className="text-sm text-slate-400">
             Your analysis is complete. Export reports or return to Dashboard.
           </p>
         </div>
         <Link
           to="/dashboard"
-          className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-medium text-primary-foreground transition-all hover:scale-[1.02]"
+          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl"
         >
           Back to Dashboard
           <ArrowRight size={16} />
