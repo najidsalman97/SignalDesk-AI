@@ -1,13 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import clsx from "clsx";
 import {
   AlertTriangle,
-  ArrowRight,
-  Check,
   CheckCircle2,
-  ChevronDown,
   Clock,
   ExternalLink,
   Loader2,
@@ -215,7 +211,6 @@ function AddConnectorModal({ isOpen, onClose }: { isOpen: boolean; onClose: () =
 
 // Connector Card
 function ConnectorCard({ connector }: { connector: Connector }) {
-  const navigate = useNavigate();
   const { removeConnector, setConnectorStatus, updateSyncInfo } = useConnectorStore();
   const { addItems, addFile } = useReviewStore();
   const [isSyncing, setIsSyncing] = useState(false);

@@ -13,7 +13,6 @@ import {
   Clock,
   ExternalLink,
   Globe,
-  GripVertical,
   Key,
   Loader2,
   Plus,

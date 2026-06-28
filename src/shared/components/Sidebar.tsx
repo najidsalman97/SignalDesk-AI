@@ -3,16 +3,14 @@ import {
   Database,
   BrainCircuit,
   FileText,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
   Sparkles,
   Zap,
   Plug,
+  Settings,
+  Activity,
 } from "lucide-react";
 
-import { NavLink } from "react-router-dom";
-import { useState } from "react";
+import { NavLink, Link } from "react-router-dom";
 import clsx from "clsx";
 
 import { useReviewStore } from "@/store/review.store";
@@ -55,40 +53,47 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const { items } = useReviewStore();
   const { result } = useAnalysisStore();
   const { providers } = useSettingsStore();
 
   const activeProvider = providers.find((p) => p.enabled && p.connectionStatus === "connected");
+  const connectedCount = providers.filter((p) => p.enabled && p.connectionStatus === "connected").length;
   const hasReviews = items.length > 0;
   const hasAnalysis = result !== null;
 
   return (
-    <aside
-      className={clsx(
-        "relative flex flex-col border-r border-white/[0.06] transition-all duration-300",
-        "bg-gradient-to-b from-[#0a0f1a]/90 to-[#080d18]/95 backdrop-blur-xl",
-        collapsed ? "w-20" : "w-72"
-      )}
-    >
-      {/* Logo */}
-      <div className="flex h-20 items-center gap-3 border-b border-white/[0.06] px-5">
-        <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">
-          <Sparkles size={22} className="text-white" />
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent" />
+    <aside className="sidebar-floating">
+      {/* Logo - Clickable to home */}
+      <Link 
+        to="/"
+        className="flex items-center gap-3 p-5 pb-4 border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
+        data-testid="sidebar-logo"
+      >
+        <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/20">
+          <Sparkles size={20} className="text-white" strokeWidth={1.5} />
         </div>
-        
-        {!collapsed && (
-          <div className="flex flex-col">
-            <h1 className="font-bold text-white tracking-tight">SignalDesk</h1>
-            <span className="text-[11px] text-indigo-300/70 font-medium">AI Crisis Intel</span>
-          </div>
-        )}
+        <div className="flex flex-col">
+          <h1 className="font-semibold text-white text-[15px] tracking-tight">SignalDesk</h1>
+          <span className="text-[10px] text-blue-400/80 font-medium tracking-wide">AI CRISIS INTEL</span>
+        </div>
+      </Link>
+
+      {/* Status Bar */}
+      <div className="px-4 py-3 border-b border-white/[0.04]">
+        <div className="flex items-center gap-2">
+          <Activity size={12} className="text-emerald-400" />
+          <span className="text-[10px] font-medium text-slate-500 tracking-wide">
+            {hasReviews ? `${items.length} reviews loaded` : "Ready to analyze"}
+          </span>
+          {hasAnalysis && (
+            <span className="ml-auto flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1.5 p-3 pt-4">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isComplete =
@@ -100,58 +105,45 @@ export default function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              data-testid={`sidebar-link-${item.label.toLowerCase()}`}
               className={({ isActive }) =>
                 clsx(
-                  "group relative flex items-center gap-3 rounded-xl px-3.5 py-3 transition-all duration-200",
-                  isActive
-                    ? "bg-gradient-to-r from-indigo-600/20 to-purple-600/10 text-white shadow-lg shadow-indigo-500/10"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                  "sidebar-nav-item group",
+                  isActive && "active"
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* Active indicator */}
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b from-indigo-400 to-purple-500" />
-                  )}
-                  
                   {/* Step number or icon */}
                   {item.step ? (
                     <div className={clsx(
-                      "flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold transition-all",
+                      "flex h-7 w-7 items-center justify-center rounded-lg text-xs font-semibold transition-all",
                       isActive 
-                        ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/30"
+                        ? "bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30"
                         : isComplete
-                        ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
-                        : "bg-white/[0.06] text-slate-500"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "bg-white/[0.04] text-slate-500"
                     )}>
                       {isComplete && !isActive ? "✓" : item.step}
                     </div>
                   ) : (
                     <div className={clsx(
-                      "flex h-8 w-8 items-center justify-center rounded-lg transition-all",
+                      "flex h-7 w-7 items-center justify-center rounded-lg transition-all",
                       isActive 
-                        ? "bg-gradient-to-br from-indigo-500/30 to-purple-500/20"
-                        : "bg-white/[0.04]"
+                        ? "bg-blue-500/15"
+                        : "bg-white/[0.02]"
                     )}>
-                      <Icon size={18} className={isActive ? "text-indigo-300" : ""} />
+                      <Icon size={16} strokeWidth={1.5} className={isActive ? "text-blue-400" : ""} />
                     </div>
                   )}
 
-                  {!collapsed && (
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-sm">{item.label}</span>
-                      {item.description && (
-                        <p className="text-[11px] text-slate-500 truncate">{item.description}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Arrow indicator on hover */}
-                  {!collapsed && isActive && (
-                    <ChevronRight size={16} className="text-indigo-400/60" />
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <span className={clsx("text-sm", isActive ? "text-white" : "")}>{item.label}</span>
+                    {item.description && (
+                      <p className="text-[10px] text-slate-600 truncate">{item.description}</p>
+                    )}
+                  </div>
                 </>
               )}
             </NavLink>
@@ -159,46 +151,53 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="border-t border-white/[0.06] p-3 space-y-2">
-        {/* AI Provider Status */}
-        {!collapsed && (
-          <NavLink
-            to="/settings"
-            className="block rounded-xl bg-gradient-to-r from-indigo-950/50 to-purple-950/30 p-3.5 border border-white/[0.06] transition-all hover:border-indigo-500/30"
-          >
-            <div className="flex items-center gap-3">
-              <div className={clsx(
-                "flex h-10 w-10 items-center justify-center rounded-lg border",
-                activeProvider 
-                  ? "bg-gradient-to-br from-emerald-500/20 to-cyan-500/10 border-emerald-500/20"
-                  : "bg-gradient-to-br from-amber-500/20 to-orange-500/10 border-amber-500/20"
-              )}>
-                <Zap size={18} className={activeProvider ? "text-emerald-400" : "text-amber-400"} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white">AI Provider</span>
-                  {activeProvider && (
-                    <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 truncate capitalize">
-                  {activeProvider?.provider ?? "Click to configure"}
-                </p>
-              </div>
-              <Settings size={14} className="text-slate-500" />
-            </div>
-          </NavLink>
-        )}
-
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] py-2.5 text-sm text-slate-500 transition-all hover:bg-white/[0.04] hover:text-white"
+      {/* Bottom Section - AI Provider */}
+      <div className="p-3 border-t border-white/[0.04]">
+        <NavLink
+          to="/settings"
+          data-testid="sidebar-link-settings"
+          className={({ isActive }) =>
+            clsx(
+              "block rounded-xl p-3 transition-all",
+              isActive 
+                ? "bg-white/[0.04] border border-blue-500/30"
+                : "bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08]"
+            )
+          }
         >
-          {collapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /><span>Collapse</span></>}
-        </button>
+          <div className="flex items-center gap-3">
+            <div className={clsx(
+              "flex h-9 w-9 items-center justify-center rounded-lg transition-all",
+              activeProvider 
+                ? "bg-emerald-500/10 border border-emerald-500/20"
+                : "bg-amber-500/10 border border-amber-500/20"
+            )}>
+              <Zap size={16} strokeWidth={1.5} className={activeProvider ? "text-emerald-400" : "text-amber-400"} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-white">
+                  {activeProvider ? "AI Active" : "Configure AI"}
+                </span>
+                {activeProvider && (
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                )}
+              </div>
+              <p className="text-[10px] text-slate-500 truncate capitalize">
+                {activeProvider 
+                  ? `${activeProvider.provider}${connectedCount > 1 ? ` +${connectedCount - 1}` : ""}`
+                  : "Click to setup"
+                }
+              </p>
+            </div>
+            <Settings size={14} strokeWidth={1.5} className="text-slate-600" />
+          </div>
+        </NavLink>
+
+        {/* Version */}
+        <div className="mt-3 px-1 text-center">
+          <span className="text-[9px] text-slate-600 font-medium tracking-wider">v1.0.0 • BETA</span>
+        </div>
       </div>
     </aside>
   );

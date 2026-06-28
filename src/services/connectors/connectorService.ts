@@ -1,5 +1,5 @@
 import type { SourceItem } from "@/shared/types/source";
-import type { Connector, ConnectorType } from "@/shared/types/connector";
+import type { Connector } from "@/shared/types/connector";
 
 export interface FetchResult {
   success: boolean;
@@ -61,7 +61,7 @@ async function fetchAppStoreReviews(config: Record<string, string>): Promise<Fet
         if (entry.content) {
           reviews.push({
             id: crypto.randomUUID(),
-            source: "app_store",
+            source: "appstore",
             title: entry.title?.label || "",
             content: entry.content.label || "",
             rating: parseInt(entry["im:rating"]?.label) || 0,
@@ -85,8 +85,7 @@ async function fetchAppStoreReviews(config: Record<string, string>): Promise<Fet
 }
 
 // Google Play Reviews (using a CORS proxy for the web scraping approach)
-async function fetchGooglePlayReviews(config: Record<string, string>): Promise<FetchResult> {
-  const { appId, language = "en", count = "100" } = config;
+async function fetchGooglePlayReviews(_config: Record<string, string>): Promise<FetchResult> {
   
   // Note: Direct Google Play scraping requires a backend or CORS proxy
   // For demo purposes, we'll return a helpful error message
@@ -175,7 +174,7 @@ async function fetchJSONAPIReviews(config: Record<string, string>): Promise<Fetc
     return { success: false, reviews: [], errorMessage: "Data path does not point to an array" };
   }
 
-  const reviews: SourceItem[] = data.map((item: any) => ({
+  const reviews = data.map((item: any): SourceItem => ({
     id: crypto.randomUUID(),
     source: "api_import",
     title: item.title || "",
@@ -184,7 +183,7 @@ async function fetchJSONAPIReviews(config: Record<string, string>): Promise<Fetc
     author: item.author || item.user || "",
     createdAt: item.createdAt || item.date || item.created_at || new Date().toISOString(),
     metadata: { sourceUrl: url },
-  })).filter((r: SourceItem) => r.content);
+  })).filter((r) => r.content);
 
   return { success: true, reviews };
 }
@@ -228,13 +227,7 @@ async function fetchRedditPosts(config: Record<string, string>): Promise<FetchRe
 }
 
 // Twitter/X Posts (requires API key)
-async function fetchTwitterPosts(config: Record<string, string>): Promise<FetchResult> {
-  const { query, bearerToken, maxResults = "10" } = config;
-
-  if (!bearerToken) {
-    return { success: false, reviews: [], errorMessage: "Twitter API bearer token is required" };
-  }
-
+async function fetchTwitterPosts(_config: Record<string, string>): Promise<FetchResult> {
   // Note: Twitter API v2 requires authentication and may have CORS issues from browser
   return {
     success: false,

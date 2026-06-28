@@ -4,7 +4,6 @@ import type {
   TestConnectionResult,
   ProviderSettings,
 } from "@/shared/types/provider";
-import { PROVIDER_CONFIGS } from "@/shared/types/provider";
 
 // Test connection and fetch models for each provider
 export async function testProviderConnection(
@@ -228,7 +227,7 @@ async function testGroqConnection(
 
 // Ollama - local server only (cloud API blocked by CORS)
 async function testOllamaConnection(
-  apiKey: string,
+  _apiKey: string,
   baseUrl: string = "http://localhost:11434",
   startTime: number
 ): Promise<TestConnectionResult> {

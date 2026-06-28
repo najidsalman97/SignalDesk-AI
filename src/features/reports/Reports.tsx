@@ -136,163 +136,459 @@ function generateJSON(result: AnalysisResult, reviewCount: number): string {
 function generatePDF(result: AnalysisResult, reviewCount: number): jsPDF {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
   let y = 20;
 
-  const addText = (text: string, fontSize: number, isBold = false) => {
+  // Colors
+  const colors = {
+    primary: [59, 130, 246] as [number, number, number],
+    purple: [139, 92, 246] as [number, number, number],
+    dark: [10, 15, 28] as [number, number, number],
+    gray: [100, 116, 139] as [number, number, number],
+    white: [255, 255, 255] as [number, number, number],
+    critical: [239, 68, 68] as [number, number, number],
+    high: [249, 115, 22] as [number, number, number],
+    medium: [245, 158, 11] as [number, number, number],
+    low: [16, 185, 129] as [number, number, number],
+  };
+
+  const severityColor = (severity: string): [number, number, number] => {
+    switch (severity) {
+      case "Critical": return colors.critical;
+      case "High": return colors.high;
+      case "Medium": return colors.medium;
+      default: return colors.low;
+    }
+  };
+
+  const addText = (text: string, fontSize: number, isBold = false, color = colors.dark) => {
     doc.setFontSize(fontSize);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
+    doc.setTextColor(...color);
     const lines = doc.splitTextToSize(text, contentWidth);
     
     lines.forEach((line: string) => {
-      if (y > 270) {
+      if (y > pageHeight - 30) {
         doc.addPage();
-        y = 20;
+        y = 30;
       }
       doc.text(line, margin, y);
-      y += fontSize * 0.5;
+      y += fontSize * 0.45;
     });
-    y += 4;
+    y += 3;
   };
 
   const addSection = (title: string) => {
-    if (y > 250) {
+    if (y > pageHeight - 60) {
       doc.addPage();
-      y = 20;
+      y = 30;
     }
-    y += 8;
-    doc.setDrawColor(200);
-    doc.line(margin, y - 4, pageWidth - margin, y - 4);
-    addText(title, 14, true);
-    y += 2;
+    y += 10;
+    
+    // Section divider line
+    doc.setDrawColor(...colors.primary);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y - 6, margin + 40, y - 6);
+    
+    addText(title, 16, true, colors.dark);
+    y += 4;
   };
 
-  // Header
-  doc.setFillColor(17, 24, 39);
-  doc.rect(0, 0, pageWidth, 45, "F");
+  // ==========================================
+  // COVER PAGE - Premium Header
+  // ==========================================
   
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  // Dark header background with gradient effect
+  doc.setFillColor(...colors.dark);
+  doc.rect(0, 0, pageWidth, 70, "F");
+  
+  // Gradient accent line
+  doc.setFillColor(...colors.primary);
+  doc.rect(0, 70, pageWidth, 3, "F");
+  
+  // Logo area
+  doc.setTextColor(...colors.white);
+  doc.setFontSize(32);
   doc.setFont("helvetica", "bold");
-  doc.text("SignalDesk AI", margin, 20);
+  doc.text("SignalDesk", margin, 30);
   
-  doc.setFontSize(12);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
-  doc.text("Crisis Intelligence Report", margin, 30);
+  doc.setTextColor(180, 180, 220);
+  doc.text("AI Crisis Intelligence Report", margin, 42);
   
+  // Date and metadata
   const date = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  doc.text(date, pageWidth - margin - doc.getTextWidth(date), 30);
-  
-  doc.setTextColor(0, 0, 0);
-  y = 60;
-
-  // Key Metrics
-  doc.setFillColor(249, 250, 251);
-  doc.roundedRect(margin, y - 5, contentWidth, 30, 3, 3, "F");
-  
   doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(107, 114, 128);
-  doc.text("REVIEWS ANALYZED", margin + 10, y + 5);
-  doc.text("SEVERITY LEVEL", margin + 60, y + 5);
-  doc.text("SEVERITY SCORE", margin + 110, y + 5);
+  doc.setTextColor(150, 160, 180);
+  doc.text(date, pageWidth - margin - doc.getTextWidth(date), 42);
+  doc.text(`${reviewCount} Reviews Analyzed`, pageWidth - margin - doc.getTextWidth(`${reviewCount} Reviews Analyzed`), 52);
   
-  doc.setFontSize(16);
+  y = 90;
+
+  // ==========================================
+  // KEY METRICS CARDS
+  // ==========================================
+  
+  const cardWidth = (contentWidth - 20) / 3;
+  const cardHeight = 45;
+  const cardY = y;
+  
+  // Card 1: Reviews Analyzed
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, cardY, cardWidth, cardHeight, 4, 4, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, cardY, cardWidth, cardHeight, 4, 4, "S");
+  
+  doc.setFontSize(9);
+  doc.setTextColor(...colors.gray);
+  doc.text("REVIEWS ANALYZED", margin + 10, cardY + 15);
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(0, 0, 0);
-  doc.text(String(reviewCount), margin + 10, y + 18);
-  doc.text(result.severity, margin + 60, y + 18);
-  doc.text(`${result.severityScore}/100`, margin + 110, y + 18);
+  doc.setTextColor(...colors.dark);
+  doc.text(String(reviewCount), margin + 10, cardY + 35);
   
-  y = 100;
+  // Card 2: Severity Level
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin + cardWidth + 10, cardY, cardWidth, cardHeight, 4, 4, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin + cardWidth + 10, cardY, cardWidth, cardHeight, 4, 4, "S");
+  
+  doc.setFontSize(9);
+  doc.setTextColor(...colors.gray);
+  doc.text("SEVERITY LEVEL", margin + cardWidth + 20, cardY + 15);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...severityColor(result.severity));
+  doc.text(result.severity, margin + cardWidth + 20, cardY + 35);
+  
+  // Card 3: Severity Score
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin + (cardWidth + 10) * 2, cardY, cardWidth, cardHeight, 4, 4, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin + (cardWidth + 10) * 2, cardY, cardWidth, cardHeight, 4, 4, "S");
+  
+  doc.setFontSize(9);
+  doc.setTextColor(...colors.gray);
+  doc.text("SEVERITY SCORE", margin + (cardWidth + 10) * 2 + 10, cardY + 15);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.dark);
+  doc.text(`${result.severityScore}/100`, margin + (cardWidth + 10) * 2 + 10, cardY + 35);
+  
+  // Progress bar for severity score
+  const progressY = cardY + 40;
+  const progressWidth = cardWidth - 20;
+  doc.setFillColor(226, 232, 240);
+  doc.roundedRect(margin + (cardWidth + 10) * 2 + 10, progressY, progressWidth, 3, 1, 1, "F");
+  doc.setFillColor(...severityColor(result.severity));
+  doc.roundedRect(margin + (cardWidth + 10) * 2 + 10, progressY, progressWidth * (result.severityScore / 100), 3, 1, 1, "F");
+  
+  y = cardY + cardHeight + 20;
 
-  // Executive Summary
-  addSection("Executive Summary");
-  doc.setTextColor(55, 65, 81);
-  addText(result.executiveSummary, 11);
-
-  // Top Issues
-  addSection("Top Issues");
-  result.topIssues.forEach((issue, i) => {
-    if (y > 250) {
-      doc.addPage();
-      y = 20;
-    }
-    
-    doc.setTextColor(0, 0, 0);
-    addText(`${i + 1}. ${issue.title}`, 12, true);
-    
-    doc.setTextColor(107, 114, 128);
+  // ==========================================
+  // SEVERITY DISTRIBUTION CHART
+  // ==========================================
+  
+  const severityCounts = {
+    Critical: result.topIssues.filter(i => i.severity === "Critical").length,
+    High: result.topIssues.filter(i => i.severity === "High").length,
+    Medium: result.topIssues.filter(i => i.severity === "Medium").length,
+    Low: result.topIssues.filter(i => i.severity === "Low").length,
+  };
+  
+  // Chart title
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.dark);
+  doc.text("Issue Distribution", margin, y);
+  y += 15;
+  
+  // Horizontal bar chart
+  const maxCount = Math.max(...Object.values(severityCounts), 1);
+  const barHeight = 12;
+  const barMaxWidth = 100;
+  
+  Object.entries(severityCounts).forEach(([severity, count]) => {
+    // Label
     doc.setFontSize(10);
-    doc.text(`Severity: ${issue.severity} | Affected: ${issue.affectedCount}`, margin, y);
-    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...colors.gray);
+    doc.text(severity, margin, y + 8);
     
-    doc.setTextColor(55, 65, 81);
-    addText(issue.description, 10);
+    // Bar background
+    doc.setFillColor(240, 240, 245);
+    doc.roundedRect(margin + 35, y, barMaxWidth, barHeight, 2, 2, "F");
     
-    doc.setTextColor(107, 114, 128);
-    addText(`Root Cause: ${issue.rootCause}`, 9);
-    addText(`Fix: ${issue.recommendedFix}`, 9);
-    y += 4;
-  });
-
-  // Jira Tickets
-  addSection("Engineering Tickets");
-  result.jiraTickets.forEach((ticket, i) => {
-    if (y > 250) {
-      doc.addPage();
-      y = 20;
+    // Bar fill
+    const barWidth = (count / maxCount) * barMaxWidth;
+    if (barWidth > 0) {
+      doc.setFillColor(...severityColor(severity));
+      doc.roundedRect(margin + 35, y, barWidth, barHeight, 2, 2, "F");
     }
     
-    doc.setTextColor(0, 0, 0);
-    addText(`SIGNAL-${String(i + 1).padStart(3, "0")}: ${ticket.title}`, 11, true);
+    // Count
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...colors.dark);
+    doc.text(String(count), margin + 35 + barMaxWidth + 10, y + 8);
     
-    doc.setTextColor(107, 114, 128);
-    doc.setFontSize(9);
-    doc.text(`Priority: ${ticket.priority}`, margin, y);
+    y += barHeight + 5;
+  });
+  
+  y += 10;
+
+  // ==========================================
+  // EXECUTIVE SUMMARY
+  // ==========================================
+  
+  addSection("Executive Summary");
+  
+  // Quote styling with left border
+  doc.setDrawColor(...colors.primary);
+  doc.setLineWidth(2);
+  doc.line(margin, y - 2, margin, y + 40);
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(55, 65, 81);
+  const summaryLines = doc.splitTextToSize(result.executiveSummary, contentWidth - 10);
+  summaryLines.forEach((line: string) => {
+    if (y > pageHeight - 30) {
+      doc.addPage();
+      y = 30;
+    }
+    doc.text(line, margin + 8, y);
     y += 5;
+  });
+  y += 10;
+
+  // ==========================================
+  // TOP ISSUES
+  // ==========================================
+  
+  addSection("Top Issues");
+  
+  result.topIssues.forEach((issue, i) => {
+    if (y > pageHeight - 70) {
+      doc.addPage();
+      y = 30;
+    }
     
-    doc.setTextColor(55, 65, 81);
-    addText(ticket.description, 10);
-    y += 2;
+    // Issue card background
+    doc.setFillColor(250, 251, 252);
+    doc.roundedRect(margin, y - 3, contentWidth, 50, 3, 3, "F");
+    
+    // Severity indicator bar
+    doc.setFillColor(...severityColor(issue.severity));
+    doc.rect(margin, y - 3, 3, 50, "F");
+    
+    // Issue number and title
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...colors.dark);
+    doc.text(`${i + 1}. ${issue.title}`, margin + 10, y + 8);
+    
+    // Severity badge
+    const badgeX = pageWidth - margin - 40;
+    doc.setFillColor(...severityColor(issue.severity));
+    doc.roundedRect(badgeX, y, 35, 14, 3, 3, "F");
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.white);
+    const badgeText = issue.severity.toUpperCase();
+    doc.text(badgeText, badgeX + 17.5 - doc.getTextWidth(badgeText) / 2, y + 9);
+    
+    // Affected count
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.gray);
+    doc.text(`${issue.affectedCount} users affected`, margin + 10, y + 18);
+    
+    // Description
+    doc.setFontSize(9);
+    doc.setTextColor(75, 85, 99);
+    const descLines = doc.splitTextToSize(issue.description, contentWidth - 25);
+    doc.text(descLines.slice(0, 2).join(" "), margin + 10, y + 28);
+    
+    // Root cause
+    if (issue.rootCause) {
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.gray);
+      doc.text(`Root cause: ${issue.rootCause.substring(0, 60)}...`, margin + 10, y + 40);
+    }
+    
+    y += 58;
   });
 
-  // Customer Communications
+  // ==========================================
+  // ENGINEERING TICKETS
+  // ==========================================
+  
+  doc.addPage();
+  y = 30;
+  addSection("Engineering Tickets");
+  
+  result.jiraTickets.forEach((ticket, i) => {
+    if (y > pageHeight - 60) {
+      doc.addPage();
+      y = 30;
+    }
+    
+    // Ticket ID
+    doc.setFillColor(...colors.primary);
+    doc.roundedRect(margin, y - 3, 70, 16, 3, 3, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...colors.white);
+    doc.text(`SIGNAL-${String(i + 1).padStart(3, "0")}`, margin + 8, y + 7);
+    
+    // Priority badge
+    const priorityColor = ticket.priority === "Critical" ? colors.critical :
+                          ticket.priority === "High" ? colors.high :
+                          ticket.priority === "Medium" ? colors.medium : colors.low;
+    doc.setFillColor(...priorityColor);
+    doc.roundedRect(margin + 75, y - 3, 45, 16, 3, 3, "F");
+    doc.setFontSize(8);
+    doc.text(ticket.priority.toUpperCase(), margin + 80, y + 7);
+    
+    y += 18;
+    
+    // Title
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...colors.dark);
+    doc.text(ticket.title, margin, y);
+    y += 8;
+    
+    // Description
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(75, 85, 99);
+    const ticketDesc = doc.splitTextToSize(ticket.description, contentWidth);
+    ticketDesc.slice(0, 3).forEach((line: string) => {
+      doc.text(line, margin, y);
+      y += 4;
+    });
+    
+    // Acceptance criteria
+    y += 4;
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.gray);
+    doc.text("Acceptance Criteria:", margin, y);
+    y += 5;
+    ticket.acceptanceCriteria.slice(0, 3).forEach((criteria) => {
+      doc.setFillColor(226, 232, 240);
+      doc.circle(margin + 3, y - 1.5, 1.5, "F");
+      doc.text(criteria.substring(0, 80), margin + 8, y);
+      y += 5;
+    });
+    
+    y += 10;
+  });
+
+  // ==========================================
+  // CUSTOMER COMMUNICATIONS
+  // ==========================================
+  
+  doc.addPage();
+  y = 30;
   addSection("Customer Communications");
   
-  doc.setTextColor(0, 0, 0);
-  addText("Customer Email", 11, true);
-  doc.setTextColor(55, 65, 81);
-  addText(result.customerEmail, 9);
-  y += 4;
+  // Email
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.dark);
+  doc.text("Customer Email Template", margin, y);
+  y += 8;
   
-  doc.setTextColor(0, 0, 0);
-  addText("Status Page Update", 11, true);
-  doc.setTextColor(55, 65, 81);
-  addText(result.statusPageUpdate, 9);
-  y += 4;
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y - 3, contentWidth, 60, 3, 3, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, y - 3, contentWidth, 60, 3, 3, "S");
   
-  doc.setTextColor(0, 0, 0);
-  addText("Social Media Update", 11, true);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(55, 65, 81);
-  addText(result.socialMediaUpdate, 9);
+  const emailLines = doc.splitTextToSize(result.customerEmail, contentWidth - 16);
+  emailLines.slice(0, 8).forEach((line: string) => {
+    doc.text(line, margin + 8, y + 5);
+    y += 4.5;
+  });
+  y += 25;
+  
+  // Status Page
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.dark);
+  doc.text("Status Page Update", margin, y);
+  y += 8;
+  
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y - 3, contentWidth, 40, 3, 3, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, y - 3, contentWidth, 40, 3, 3, "S");
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(55, 65, 81);
+  const statusLines = doc.splitTextToSize(result.statusPageUpdate, contentWidth - 16);
+  statusLines.slice(0, 5).forEach((line: string) => {
+    doc.text(line, margin + 8, y + 5);
+    y += 4.5;
+  });
+  y += 20;
+  
+  // Social Media
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(...colors.dark);
+  doc.text("Social Media Response", margin, y);
+  y += 8;
+  
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, y - 3, contentWidth, 30, 3, 3, "F");
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(margin, y - 3, contentWidth, 30, 3, 3, "S");
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(55, 65, 81);
+  const socialLines = doc.splitTextToSize(result.socialMediaUpdate, contentWidth - 16);
+  socialLines.slice(0, 4).forEach((line: string) => {
+    doc.text(line, margin + 8, y + 5);
+    y += 4.5;
+  });
 
-  // Footer on last page
+  // ==========================================
+  // FOOTER ON ALL PAGES
+  // ==========================================
+  
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    
+    // Footer line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+    
+    // Footer text
     doc.setFontSize(8);
-    doc.setTextColor(156, 163, 175);
+    doc.setTextColor(...colors.gray);
     doc.text(
-      `Page ${i} of ${pageCount} | Generated by SignalDesk AI`,
-      pageWidth / 2,
-      290,
-      { align: "center" }
+      `SignalDesk AI • Crisis Intelligence Report`,
+      margin,
+      pageHeight - 8
+    );
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      pageWidth - margin - 25,
+      pageHeight - 8
     );
   }
 

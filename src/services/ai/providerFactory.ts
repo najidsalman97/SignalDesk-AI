@@ -10,13 +10,18 @@ import { analyzeWithGroq } from "./providers/groq";
 import { analyzeWithOllama } from "./providers/ollama";
 
 export class ProviderError extends Error {
+  public provider: AIProvider;
+  public isRetryable: boolean;
+  
   constructor(
     message: string,
-    public provider: AIProvider,
-    public isRetryable: boolean = true
+    provider: AIProvider,
+    isRetryable: boolean = true
   ) {
     super(message);
     this.name = "ProviderError";
+    this.provider = provider;
+    this.isRetryable = isRetryable;
   }
 }
 

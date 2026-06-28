@@ -12,7 +12,9 @@ export type SourceType =
   | "g2"
   | "website"
   | "manual"
-  | "demo";
+  | "demo"
+  | "csv_import"
+  | "api_import";
 
 export interface SourceItem {
   id: string;

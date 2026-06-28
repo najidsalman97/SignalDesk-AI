@@ -12,78 +12,80 @@ import {
   TrendingUp,
   Upload,
   Users,
-  Zap,
+  CheckCircle,
+  Activity,
+  Play,
 } from "lucide-react";
-import clsx from "clsx";
 
 import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
 import { useSettingsStore } from "@/store/settings.store";
-
-const severityConfig = {
-  Low: { bg: "from-emerald-500/20 to-emerald-600/10", text: "text-emerald-400", border: "border-emerald-500/30" },
-  Medium: { bg: "from-amber-500/20 to-amber-600/10", text: "text-amber-400", border: "border-amber-500/30" },
-  High: { bg: "from-orange-500/20 to-orange-600/10", text: "text-orange-400", border: "border-orange-500/30" },
-  Critical: { bg: "from-red-500/20 to-red-600/10", text: "text-red-400", border: "border-red-500/30" },
-};
-
-function GlassCard({ children, className, hover = false }: { children: React.ReactNode; className?: string; hover?: boolean }) {
-  return (
-    <div className={clsx(
-      "rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-900/40 backdrop-blur-xl",
-      hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-white/[0.12]",
-      className
-    )}>
-      {children}
-    </div>
-  );
-}
-
-function SeverityBadge({ severity }: { severity: string }) {
-  const config = severityConfig[severity as keyof typeof severityConfig] || severityConfig.Low;
-  return (
-    <span className={clsx(
-      "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide",
-      `bg-gradient-to-r ${config.bg} ${config.text} ${config.border}`
-    )}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-      {severity}
-    </span>
-  );
-}
+import {
+  GlassCard,
+  MetricTile,
+  GlowButton,
+  GradientBadge,
+  IconContainer,
+  SectionHeader,
+  EmptyState,
+  Timeline,
+  IssueCard,
+} from "@/shared/components/premium";
 
 export default function Dashboard() {
   const { items, importedFiles } = useReviewStore();
-  const { result } = useAnalysisStore();
+  const { result, stats } = useAnalysisStore();
   const { providers } = useSettingsStore();
 
-  const activeProvider = providers.find((p) => p.enabled);
+  const activeProvider = providers.find((p) => p.enabled && p.connectionStatus === "connected");
   const hasReviews = items.length > 0;
   const hasAnalysis = result !== null;
 
   // Empty state - no reviews
   if (!hasReviews && !hasAnalysis) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
+      <div className="space-y-8 animate-fade-in">
+        {/* Hero Header */}
+        <div className="text-center max-w-2xl mx-auto pt-8">
+          <GradientBadge icon={<Sparkles size={12} />} className="mb-4">
+            AI-Powered Analysis
+          </GradientBadge>
+          <h1 className="heading-display text-4xl sm:text-5xl text-white mb-4">
+            Welcome to <span className="gradient-text">SignalDesk</span>
+          </h1>
+          <p className="text-slate-400 text-lg">
+            Transform customer feedback into actionable insights with AI-powered crisis intelligence.
+          </p>
         </div>
 
-        <GlassCard className="flex flex-col items-center justify-center py-20">
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 p-6 border border-indigo-500/20">
-            <Upload size={40} className="text-indigo-400" />
-          </div>
-          <h2 className="mt-8 text-2xl font-bold text-white">Get Started with SignalDesk</h2>
-          <p className="mt-3 max-w-md text-center text-slate-400">
-            Import customer reviews from CSV, Excel, JSON, or paste them directly.
-            Then let AI analyze the feedback and generate actionable insights.
-          </p>
-          <Link to="/sources" className="mt-8 flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30">
-            <Upload size={20} />
-            Import Reviews
-            <ArrowRight size={18} />
-          </Link>
+        <GlassCard className="max-w-xl mx-auto" padding="xl">
+          <EmptyState
+            icon={<Upload size={32} className="text-slate-500" strokeWidth={1.5} />}
+            title="Start Your Analysis"
+            description="Import customer reviews from CSV, Excel, JSON, or use our demo data to explore SignalDesk's powerful AI analysis."
+            action={
+              <div className="flex flex-col sm:flex-row gap-3">
+                <GlowButton
+                  variant="primary"
+                  size="lg"
+                  href="/sources"
+                  icon={<Upload size={18} />}
+                  data-testid="dashboard-import-btn"
+                >
+                  Import Reviews
+                </GlowButton>
+                <GlowButton
+                  variant="default"
+                  size="lg"
+                  href="/sources"
+                  icon={<Play size={18} />}
+                  data-testid="dashboard-demo-btn"
+                >
+                  Try Demo Data
+                </GlowButton>
+              </div>
+            }
+          />
         </GlassCard>
       </div>
     );
@@ -92,67 +94,60 @@ export default function Dashboard() {
   // Reviews but no analysis
   if (hasReviews && !hasAnalysis) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 animate-fade-in">
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
+          <GradientBadge icon={<Activity size={12} />} className="mb-3">
+            Ready for Analysis
+          </GradientBadge>
+          <h1 className="heading-display text-3xl sm:text-4xl text-white">
+            {items.length} Reviews Loaded
+          </h1>
+          <p className="text-slate-500 mt-2">Run AI analysis to discover issues and generate insights.</p>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-3">
-          <GlassCard hover className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Reviews Imported</p>
-                <p className="mt-2 text-3xl font-bold text-white">{items.length}</p>
-                <p className="mt-1 text-xs text-slate-500">From {importedFiles} file{importedFiles !== 1 ? "s" : ""}</p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20">
-                <BarChart3 size={22} className="text-blue-400" />
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard hover className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">AI Provider</p>
-                <p className="mt-2 text-2xl font-bold text-white capitalize">{activeProvider?.provider ?? "Not configured"}</p>
-                <p className="mt-1 text-xs text-slate-500">{activeProvider?.model || "Go to Settings"}</p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20">
-                <BrainCircuit size={22} className="text-purple-400" />
-              </div>
-            </div>
-          </GlassCard>
-
-          <GlassCard hover className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Analysis Status</p>
-                <p className="mt-2 text-2xl font-bold text-amber-400">Pending</p>
-                <p className="mt-1 text-xs text-slate-500">Ready for analysis</p>
-              </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/20">
-                <Clock size={22} className="text-amber-400" />
-              </div>
-            </div>
-          </GlassCard>
+        <div className="grid gap-5 sm:grid-cols-3">
+          <MetricTile
+            label="Reviews Imported"
+            value={items.length}
+            icon={<BarChart3 size={20} strokeWidth={1.5} />}
+            color="blue"
+            subtitle={`From ${importedFiles} file${importedFiles !== 1 ? "s" : ""}`}
+          />
+          <MetricTile
+            label="AI Provider"
+            value={activeProvider?.provider ?? "—"}
+            icon={<BrainCircuit size={20} strokeWidth={1.5} />}
+            color="purple"
+            subtitle={activeProvider?.model || "Not configured"}
+          />
+          <MetricTile
+            label="Status"
+            value="Pending"
+            icon={<Clock size={20} strokeWidth={1.5} />}
+            color="amber"
+            subtitle="Ready for analysis"
+          />
         </div>
 
-        <GlassCard className="flex flex-col items-center justify-center py-16">
-          <div className="rounded-2xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 p-6 border border-violet-500/20">
-            <Sparkles size={40} className="text-violet-400" />
+        <GlassCard padding="xl">
+          <div className="flex flex-col items-center text-center py-8">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/10 border border-blue-500/20 flex items-center justify-center mb-6">
+              <Sparkles size={28} className="text-blue-400" strokeWidth={1.5} />
+            </div>
+            <h2 className="heading-section text-2xl text-white mb-3">Ready to Analyze</h2>
+            <p className="text-slate-500 max-w-md mb-8">
+              Our AI will analyze {items.length} reviews to discover issues, generate Jira tickets, and create customer communications.
+            </p>
+            <GlowButton
+              variant="primary"
+              size="lg"
+              href="/analysis"
+              icon={<BrainCircuit size={20} />}
+              data-testid="dashboard-analyze-btn"
+            >
+              Start AI Analysis
+            </GlowButton>
           </div>
-          <h2 className="mt-8 text-2xl font-bold text-white">Ready to Analyze</h2>
-          <p className="mt-3 max-w-md text-center text-slate-400">
-            You have {items.length} reviews imported. Run AI analysis to discover
-            issues, generate Jira tickets, and create customer communications.
-          </p>
-          <Link to="/analysis" className="mt-8 flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30">
-            <BrainCircuit size={20} />
-            Start AI Analysis
-            <ArrowRight size={18} />
-          </Link>
         </GlassCard>
       </div>
     );
@@ -162,233 +157,197 @@ export default function Dashboard() {
   const criticalIssues = result!.topIssues.filter(i => i.severity === "Critical").length;
   const highIssues = result!.topIssues.filter(i => i.severity === "High").length;
 
+  const timelineItems = [
+    {
+      id: "1",
+      title: "Reviews Imported",
+      description: `${items.length} reviews from ${importedFiles} source${importedFiles !== 1 ? "s" : ""}`,
+      icon: <Upload size={14} strokeWidth={1.5} />,
+      status: "completed" as const,
+    },
+    {
+      id: "2",
+      title: "AI Analysis Complete",
+      description: stats ? `Processed in ${Math.round(stats.elapsedMs / 1000)}s` : "Analysis complete",
+      icon: <BrainCircuit size={14} strokeWidth={1.5} />,
+      status: "completed" as const,
+    },
+    {
+      id: "3",
+      title: `${result!.topIssues.length} Issues Identified`,
+      description: `${criticalIssues} critical, ${highIssues} high priority`,
+      icon: <AlertTriangle size={14} strokeWidth={1.5} />,
+      status: "completed" as const,
+    },
+    {
+      id: "4",
+      title: "Reports Generated",
+      description: "Ready for export",
+      icon: <FileText size={14} strokeWidth={1.5} />,
+      status: "completed" as const,
+    },
+  ];
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between">
+    <div className="space-y-8 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <p className="mt-2 text-slate-400">Monitor customer feedback, incidents and AI powered insights.</p>
+          <div className="flex items-center gap-3 mb-2">
+            <GradientBadge icon={<CheckCircle size={12} />} variant="low">
+              Analysis Complete
+            </GradientBadge>
+          </div>
+          <h1 className="heading-display text-3xl sm:text-4xl text-white">
+            Executive Dashboard
+          </h1>
+          <p className="text-slate-500 mt-1">AI-powered insights from {items.length} customer reviews</p>
         </div>
-        <Link to="/reports" className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl">
-          <FileText size={18} />
+        <GlowButton
+          variant="primary"
+          href="/reports"
+          icon={<FileText size={18} />}
+          data-testid="dashboard-export-btn"
+        >
           Export Reports
-        </Link>
+        </GlowButton>
       </div>
 
       {/* Primary KPIs */}
-      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <GlassCard hover className="p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Reviews Analyzed</p>
-              <p className="mt-2 text-4xl font-bold text-white">{items.length}</p>
-              <p className="mt-1 text-xs text-slate-500">From {importedFiles} file{importedFiles !== 1 ? "s" : ""}</p>
-              <div className="mt-3 h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full w-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400" />
-              </div>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20">
-              <Users size={22} className="text-blue-400" />
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard hover className="p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Overall Severity</p>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className={clsx(
-                  "text-3xl font-bold",
-                  result!.severity === "Critical" ? "text-red-400" :
-                  result!.severity === "High" ? "text-orange-400" :
-                  result!.severity === "Medium" ? "text-amber-400" : "text-emerald-400"
-                )}>{result!.severity}</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-500">{criticalIssues} critical, {highIssues} high</p>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
-              <AlertTriangle size={22} className="text-orange-400" />
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard hover className="p-5">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Severity Score</p>
-              <div className="mt-2 flex items-baseline gap-1">
-                <span className="text-4xl font-bold text-white">{result!.severityScore}</span>
-                <span className="text-lg text-slate-500">/100</span>
-              </div>
-              <div className="mt-3 h-2 w-full rounded-full bg-white/[0.06] overflow-hidden">
-                <div 
-                  className={clsx("h-full rounded-full transition-all duration-700",
-                    result!.severityScore >= 80 ? "bg-gradient-to-r from-red-500 to-red-400" :
-                    result!.severityScore >= 60 ? "bg-gradient-to-r from-orange-500 to-orange-400" :
-                    result!.severityScore >= 40 ? "bg-gradient-to-r from-amber-500 to-amber-400" :
-                    "bg-gradient-to-r from-emerald-500 to-emerald-400"
-                  )}
-                  style={{ width: `${result!.severityScore}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/10 border border-cyan-500/20">
-              <TrendingUp size={22} className="text-cyan-400" />
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard hover className="p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">AI Provider</p>
-              <p className="mt-2 text-2xl font-bold text-white capitalize">{activeProvider?.provider ?? "—"}</p>
-              <div className="mt-2 flex items-center gap-2">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-xs text-emerald-400">Active</span>
-              </div>
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20">
-              <Sparkles size={22} className="text-purple-400" />
-            </div>
-          </div>
-        </GlassCard>
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricTile
+          label="Reviews Analyzed"
+          value={items.length}
+          icon={<Users size={20} strokeWidth={1.5} />}
+          color="blue"
+          trend={{ value: "100%", positive: true }}
+          subtitle={`${importedFiles} source${importedFiles !== 1 ? "s" : ""}`}
+        />
+        <MetricTile
+          label="Overall Severity"
+          value={result!.severity}
+          icon={<AlertTriangle size={20} strokeWidth={1.5} />}
+          color={result!.severity === "Critical" ? "rose" : result!.severity === "High" ? "amber" : "emerald"}
+          subtitle={`${criticalIssues} critical, ${highIssues} high`}
+        />
+        <MetricTile
+          label="Severity Score"
+          value={`${result!.severityScore}/100`}
+          icon={<TrendingUp size={20} strokeWidth={1.5} />}
+          color={result!.severityScore >= 70 ? "rose" : result!.severityScore >= 40 ? "amber" : "emerald"}
+          subtitle="Based on issue analysis"
+        />
+        <MetricTile
+          label="AI Provider"
+          value={activeProvider?.provider ?? "—"}
+          icon={<Sparkles size={20} strokeWidth={1.5} />}
+          color="purple"
+          subtitle="Active"
+        />
       </div>
 
-      {/* Secondary metrics */}
-      <div className="grid gap-5 md:grid-cols-3">
-        <GlassCard hover className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
-                <AlertTriangle size={18} className="text-orange-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{result!.topIssues.length}</p>
-                <p className="text-xs text-slate-500">Top Issues</p>
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard hover className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/10 border border-violet-500/20">
-                <TicketCheck size={18} className="text-violet-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{result!.jiraTickets.length}</p>
-                <p className="text-xs text-slate-500">Jira Tickets</p>
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-
-        <GlassCard hover className="p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/10 border border-emerald-500/20">
-                <FileText size={18} className="text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">1</p>
-                <p className="text-xs text-slate-500">Reports Ready</p>
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-      </div>
-
-      {/* Two Column */}
-      <div className="grid gap-6 lg:grid-cols-5">
-        {/* Executive Summary */}
-        <GlassCard className="lg:col-span-3 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20">
-                <FileText size={20} className="text-indigo-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-white">Executive Summary</h3>
-            </div>
-            <Link to="/analysis" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-              View Full Analysis <ArrowRight size={14} />
-            </Link>
-          </div>
-          <p className="text-slate-300 leading-relaxed line-clamp-4">{result!.executiveSummary}</p>
-        </GlassCard>
-
-        {/* Quick Actions */}
-        <GlassCard className="lg:col-span-2 p-6">
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Executive Summary - Large Hero Card */}
+        <GlassCard className="lg:col-span-8" padding="lg">
           <div className="flex items-center gap-3 mb-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/20">
-              <Zap size={20} className="text-amber-400" />
+            <IconContainer color="blue" size="md">
+              <FileText size={18} strokeWidth={1.5} />
+            </IconContainer>
+            <div>
+              <h3 className="heading-section text-lg text-white">Executive Summary</h3>
+              <p className="text-xs text-slate-500">AI-generated analysis overview</p>
             </div>
-            <h3 className="font-semibold text-white">Quick Actions</h3>
           </div>
-          
-          <div className="space-y-2">
-            {[
-              { label: "View Full Analysis", to: "/analysis", icon: BrainCircuit },
-              { label: "Export Reports", to: "/reports", icon: FileText },
-              { label: "Import More Reviews", to: "/sources", icon: Upload },
-            ].map((action, i) => (
-              <Link key={i} to={action.to} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 transition-all hover:bg-white/[0.04] hover:border-white/[0.1] group">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.06]">
-                    <action.icon size={16} className="text-slate-400" />
-                  </div>
-                  <span className="font-medium text-white text-sm">{action.label}</span>
-                </div>
-                <ChevronRight size={16} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
-              </Link>
-            ))}
+          <div className="relative">
+            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-blue-500 to-purple-500" />
+            <p className="pl-5 text-slate-300 leading-relaxed text-[15px]">
+              {result!.executiveSummary}
+            </p>
           </div>
+          <div className="mt-6 pt-5 border-t border-white/[0.04] flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <TicketCheck size={14} />
+                {result!.jiraTickets.length} tickets generated
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <AlertTriangle size={14} />
+                {result!.topIssues.length} issues identified
+              </div>
+            </div>
+            <GlowButton variant="ghost" href="/analysis" icon={<ArrowRight size={14} />}>
+              View Details
+            </GlowButton>
+          </div>
+        </GlassCard>
+
+        {/* Activity Timeline */}
+        <GlassCard className="lg:col-span-4" padding="lg">
+          <div className="flex items-center gap-3 mb-5">
+            <IconContainer color="emerald" size="md">
+              <Activity size={18} strokeWidth={1.5} />
+            </IconContainer>
+            <div>
+              <h3 className="heading-section text-lg text-white">Activity</h3>
+              <p className="text-xs text-slate-500">Analysis timeline</p>
+            </div>
+          </div>
+          <Timeline items={timelineItems} />
         </GlassCard>
       </div>
 
-      {/* Top Issues Preview */}
-      <GlassCard className="p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 border border-orange-500/20">
-              <AlertTriangle size={20} className="text-orange-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-white">Top Issues</h3>
-          </div>
-          <Link to="/analysis" className="text-sm text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
-            View All {result!.topIssues.length} Issues <ChevronRight size={14} />
-          </Link>
-        </div>
-        
-        <div className="grid gap-4 md:grid-cols-3">
-          {result!.topIssues.slice(0, 3).map((issue, index) => (
-            <div key={index} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:bg-white/[0.04]">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-2">
-                  <span className={clsx(
-                    "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold",
-                    issue.severity === "Critical" ? "bg-red-500/20 text-red-400" :
-                    issue.severity === "High" ? "bg-orange-500/20 text-orange-400" :
-                    issue.severity === "Medium" ? "bg-amber-500/20 text-amber-400" :
-                    "bg-emerald-500/20 text-emerald-400"
-                  )}>
-                    {index + 1}
-                  </span>
-                  <h4 className="font-semibold text-white text-sm line-clamp-1">{issue.title}</h4>
-                </div>
-              </div>
-              <SeverityBadge severity={issue.severity} />
-              <p className="mt-3 text-sm text-slate-400 line-clamp-2">{issue.description}</p>
-              <div className="mt-3 flex items-center gap-1 text-xs text-slate-500">
-                <Users size={12} />
-                {issue.affectedCount} affected
-              </div>
-            </div>
+      {/* Top Issues */}
+      <div>
+        <SectionHeader
+          title="Top Issues"
+          subtitle={`${result!.topIssues.length} issues require attention`}
+          action={
+            <GlowButton variant="ghost" href="/analysis" icon={<ChevronRight size={14} />}>
+              View All
+            </GlowButton>
+          }
+          className="mb-5"
+        />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {result!.topIssues.slice(0, 6).map((issue, index) => (
+            <IssueCard
+              key={index}
+              title={issue.title}
+              description={issue.description}
+              severity={issue.severity}
+              affectedCount={issue.affectedCount}
+              rootCause={issue.rootCause}
+            />
           ))}
         </div>
-      </GlassCard>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid gap-5 sm:grid-cols-3">
+        {[
+          { label: "Full Analysis", desc: "View complete report", to: "/analysis", icon: BrainCircuit, color: "blue" as const },
+          { label: "Export Reports", desc: "PDF, Markdown, JSON", to: "/reports", icon: FileText, color: "purple" as const },
+          { label: "Import More", desc: "Add more reviews", to: "/sources", icon: Upload, color: "cyan" as const },
+        ].map((action) => (
+          <Link
+            key={action.to}
+            to={action.to}
+            className="glass-card p-5 group"
+          >
+            <div className="flex items-center gap-4">
+              <IconContainer color={action.color} size="lg">
+                <action.icon size={22} strokeWidth={1.5} />
+              </IconContainer>
+              <div className="flex-1">
+                <h4 className="font-medium text-white group-hover:text-blue-300 transition-colors">{action.label}</h4>
+                <p className="text-xs text-slate-500">{action.desc}</p>
+              </div>
+              <ChevronRight size={18} className="text-slate-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

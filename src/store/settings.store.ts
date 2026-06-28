@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ProviderSettings, AIProvider, ConnectionStatus, ProviderModel } from "@/shared/types/provider";
-import { PROVIDER_CONFIGS } from "@/shared/types/provider";
 
 interface SettingsStore {
   project: string;
@@ -170,7 +169,7 @@ export const useSettingsStore = create<SettingsStore>()(
     {
       name: "signaldesk-settings",
       // Migrate old data to ensure all required fields exist
-      migrate: (persistedState: any, version: number) => {
+      migrate: (persistedState: any) => {
         if (persistedState?.providers) {
           persistedState.providers = persistedState.providers.map((p: any) => ({
             ...p,

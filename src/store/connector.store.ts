@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Connector, ConnectorType, ConnectorStatus } from "@/shared/types/connector";
+import type { Connector, ConnectorStatus } from "@/shared/types/connector";
 
 interface ConnectorState {
   connectors: Connector[];
