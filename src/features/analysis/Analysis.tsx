@@ -21,11 +21,14 @@ import {
   TrendingUp,
   Users,
   Zap,
+  X,
+  Rocket,
+  Microscope,
 } from "lucide-react";
 import clsx from "clsx";
 
-import { analyzeReviews, getActiveProvider } from "@/services/ai/providerFactory";
-import { chunkReviews } from "@/services/ai/reviewChunker";
+import { runAnalysis, type AnalysisMode, type AnalysisProgress } from "@/services/ai/engine";
+import { getActiveProvider } from "@/services/ai/providerFactory";
 
 import { useReviewStore } from "@/store/review.store";
 import { useAnalysisStore } from "@/store/analysis.store";
@@ -131,16 +134,34 @@ function CopyButton({ text }: { text: string }) {
 
 export default function Analysis() {
   const { items } = useReviewStore();
-  const { result, loading, error, setLoading, setResult, setError } = useAnalysisStore();
-  const { autoSelectProvider } = useSettingsStore();
+  const { 
+    result, 
+    loading, 
+    error, 
+    progress,
+    setLoading, 
+    setResult, 
+    setError,
+    setProgress,
+    setAbortController,
+    cancelAnalysis,
+  } = useAnalysisStore();
+  const { autoSelectProvider, providers } = useSettingsStore();
+  
+  const [selectedMode, setSelectedMode] = useState<AnalysisMode>("deep");
 
   const provider = getActiveProvider();
   const connectedProviders = useSettingsStore.getState().getConnectedProviders();
 
-  async function handleAnalyze() {
+  async function handleAnalyze(mode?: AnalysisMode) {
+    const analysisMode = mode || selectedMode;
+    const abortController = new AbortController();
+    setAbortController(abortController);
+    
     try {
       setLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
+      setProgress(null);
       
       // Validate reviews have content
       const validReviews = items.filter(item => item.content && item.content.trim().length > 0);
@@ -148,16 +169,36 @@ export default function Analysis() {
         throw new Error("No valid reviews to analyze. Reviews must have content.");
       }
       
-      const chunks = chunkReviews(validReviews);
-      if (!chunks || chunks.length === 0 || !chunks[0]?.reviews?.length) {
-        throw new Error("Failed to prepare reviews for analysis.");
-      }
+      // Run the new analysis engine
+      const result = await runAnalysis(
+        validReviews,
+        providers,
+        { 
+          mode: analysisMode,
+          maxConcurrency: 2,
+          maxRetries: 3,
+          fastModeSampleSize: 100,
+        },
+        (p: AnalysisProgress) => setProgress(p),
+        abortController.signal
+      );
       
-      const response = await analyzeReviews(chunks[0].reviews);
-      setResult(response);
+      if (result.success && result.result) {
+        setResult(result.result, result.stats);
+      } else {
+        setError(result.error || "Analysis failed");
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      if (e instanceof Error && e.name === "AbortError") {
+        setError("Analysis cancelled");
+      } else {
+        setError(e instanceof Error ? e.message : "Unknown error");
+      }
     }
+  }
+
+  function handleCancel() {
+    cancelAnalysis();
   }
 
   // No reviews state
@@ -203,7 +244,7 @@ export default function Analysis() {
                   Dismiss
                 </button>
                 <button
-                  onClick={handleAnalyze}
+                  onClick={() => handleAnalyze()}
                   data-testid="try-again-btn"
                   className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl"
                 >
@@ -220,17 +261,25 @@ export default function Analysis() {
 
   // Ready to analyze state
   if (!result && !loading) {
+    const showModeSelector = items.length > 100;
+    
     return (
       <div className="space-y-8">
         <PageHeader title="AI Analysis" description="Generate executive crisis reports powered by AI." />
 
-        <div className="grid gap-5 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3 lg:grid-cols-4">
           <KPICard title="Reviews Ready" value={items.length} subtitle="Imported and ready for analysis" icon={BarChart3} color="blue" />
           <KPICard title="AI Provider" value={provider?.provider ?? "Not configured"} subtitle={provider?.model || "Go to Settings to configure"} icon={BrainCircuit} color="purple" />
           {autoSelectProvider && connectedProviders.length > 1 && (
             <KPICard title="Fallback Providers" value={connectedProviders.length - 1} subtitle="Available backups" icon={Zap} color="cyan" />
           )}
-          <KPICard title="Estimated Time" value="~30s" subtitle="Depending on review count" icon={Clock} color="cyan" />
+          <KPICard 
+            title="Estimated Time" 
+            value={items.length > 500 ? "1-3m" : items.length > 100 ? "30-60s" : "~15s"} 
+            subtitle={items.length > 100 ? "Chunked processing" : "Single batch"} 
+            icon={Clock} 
+            color="cyan" 
+          />
         </div>
 
         {!provider && (
@@ -266,35 +315,150 @@ export default function Analysis() {
           </GlassCard>
         )}
 
-        <button
-          disabled={loading || !provider || items.length === 0}
-          onClick={handleAnalyze}
-          data-testid="start-analysis-btn"
-          className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/40 disabled:opacity-50"
-        >
-          <Sparkles size={24} className="transition-transform group-hover:rotate-12" />
-          Start AI Analysis
-        </button>
+        {/* Mode Selector - Only show for large datasets */}
+        {showModeSelector && provider && (
+          <GlassCard className="p-5">
+            <h3 className="font-semibold text-white mb-4">Analysis Mode</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <button
+                onClick={() => setSelectedMode("fast")}
+                className={clsx(
+                  "flex items-start gap-4 rounded-xl border p-4 text-left transition-all",
+                  selectedMode === "fast"
+                    ? "border-emerald-500/50 bg-emerald-500/10"
+                    : "border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]"
+                )}
+              >
+                <div className={clsx(
+                  "flex h-10 w-10 items-center justify-center rounded-lg",
+                  selectedMode === "fast" ? "bg-emerald-500/20" : "bg-white/[0.06]"
+                )}>
+                  <Rocket size={20} className={selectedMode === "fast" ? "text-emerald-400" : "text-slate-400"} />
+                </div>
+                <div>
+                  <h4 className={clsx("font-medium", selectedMode === "fast" ? "text-emerald-300" : "text-white")}>
+                    Fast Mode
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Analyze a representative sample (~100 reviews) for quick insights in seconds.
+                  </p>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setSelectedMode("deep")}
+                className={clsx(
+                  "flex items-start gap-4 rounded-xl border p-4 text-left transition-all",
+                  selectedMode === "deep"
+                    ? "border-indigo-500/50 bg-indigo-500/10"
+                    : "border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]"
+                )}
+              >
+                <div className={clsx(
+                  "flex h-10 w-10 items-center justify-center rounded-lg",
+                  selectedMode === "deep" ? "bg-indigo-500/20" : "bg-white/[0.06]"
+                )}>
+                  <Microscope size={20} className={selectedMode === "deep" ? "text-indigo-400" : "text-slate-400"} />
+                </div>
+                <div>
+                  <h4 className={clsx("font-medium", selectedMode === "deep" ? "text-indigo-300" : "text-white")}>
+                    Deep Mode
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Analyze all {items.length} reviews with intelligent chunking for comprehensive insights.
+                  </p>
+                </div>
+              </button>
+            </div>
+          </GlassCard>
+        )}
+
+        <div className="flex gap-4">
+          <button
+            disabled={loading || !provider || items.length === 0}
+            onClick={() => handleAnalyze(selectedMode)}
+            data-testid="start-analysis-btn"
+            className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/40 disabled:opacity-50"
+          >
+            <Sparkles size={24} className="transition-transform group-hover:rotate-12" />
+            {showModeSelector && selectedMode === "fast" ? "Quick Analysis" : "Start AI Analysis"}
+          </button>
+          
+          {/* Quick action for fast mode on large datasets */}
+          {showModeSelector && selectedMode === "deep" && (
+            <button
+              disabled={loading || !provider}
+              onClick={() => handleAnalyze("fast")}
+              className="flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-4 font-medium text-emerald-300 transition-all hover:bg-emerald-500/20"
+            >
+              <Rocket size={20} />
+              Quick Preview
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
-  // Loading state
+  // Loading state with progress
   if (loading) {
     return (
       <div className="space-y-8">
         <PageHeader title="AI Analysis" description="Generate executive crisis reports powered by AI." />
-        <GlassCard className="flex flex-col items-center justify-center py-20">
+        <GlassCard className="flex flex-col items-center justify-center py-16">
           <div className="relative">
             <div className="h-20 w-20 animate-spin rounded-full border-4 border-indigo-500/20 border-t-indigo-500" />
             <BrainCircuit size={32} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-400" />
           </div>
-          <h2 className="mt-8 text-2xl font-bold text-white">Analyzing Reviews</h2>
-          <p className="mt-2 text-slate-400">AI is processing {items.length} reviews...</p>
-          <div className="mt-6 flex items-center gap-2 text-sm text-slate-500">
-            <Radio size={14} className="animate-pulse text-indigo-400" />
-            Clustering issues and generating insights
-          </div>
+          
+          <h2 className="mt-8 text-2xl font-bold text-white">
+            {progress?.phase === "completed" ? "Analysis Complete!" : "Analyzing Reviews"}
+          </h2>
+          
+          {/* Progress message */}
+          <p className="mt-2 text-slate-400 text-center max-w-md">
+            {progress?.message || `AI is processing ${items.length} reviews...`}
+          </p>
+          
+          {/* Progress bar */}
+          {progress && (
+            <div className="mt-6 w-full max-w-md">
+              <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                <span>{progress.currentProvider && `Using ${progress.currentProvider}`}</span>
+                <span>{Math.round(progress.percentComplete)}%</span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                <div 
+                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-300"
+                  style={{ width: `${progress.percentComplete}%` }}
+                />
+              </div>
+              
+              {/* Chunk progress */}
+              {progress.totalChunks && progress.totalChunks > 1 && (
+                <div className="mt-2 text-xs text-slate-500 text-center">
+                  Chunk {progress.currentChunk} of {progress.totalChunks}
+                </div>
+              )}
+              
+              {/* Elapsed time */}
+              <div className="mt-3 flex items-center justify-center gap-4 text-xs text-slate-500">
+                <span>Elapsed: {Math.round(progress.elapsedMs / 1000)}s</span>
+                {progress.estimatedRemainingMs && progress.estimatedRemainingMs > 0 && (
+                  <span>Remaining: ~{Math.round(progress.estimatedRemainingMs / 1000)}s</span>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Cancel button */}
+          <button
+            onClick={handleCancel}
+            className="mt-8 flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 font-medium text-slate-300 transition-all hover:bg-white/[0.08]"
+          >
+            <X size={16} />
+            Cancel Analysis
+          </button>
         </GlassCard>
       </div>
     );
