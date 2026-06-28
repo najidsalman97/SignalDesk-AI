@@ -2,7 +2,7 @@
  * Column Mapping Modal - Preview data and map columns to fields
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import clsx from "clsx";
 import {
   ArrowRight,
@@ -78,6 +78,13 @@ export function ColumnMappingModal({
   }), [columns]);
 
   const [mapping, setMapping] = useState<ColumnMapping>(initialMapping);
+
+  // Re-sync mapping when columns change (fix for modal being permanently mounted)
+  useEffect(() => {
+    if (columns.length > 0) {
+      setMapping(initialMapping);
+    }
+  }, [columns.join("|"), initialMapping.content, initialMapping.title, initialMapping.author, initialMapping.rating]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Preview first 5 rows
@@ -246,6 +253,16 @@ export function ColumnMappingModal({
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+              {!mapping.content ? (
+                <div className="p-8 text-center">
+                  <div className="mx-auto w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mb-3">
+                    <Table size={24} className="text-slate-500" />
+                  </div>
+                  <p className="text-sm text-slate-500">
+                    Select a content column to preview your data
+                  </p>
+                </div>
+              ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-white/[0.02]">
@@ -304,6 +321,7 @@ export function ColumnMappingModal({
                   ))}
                 </tbody>
               </table>
+              )}
             </div>
 
             {!mapping.content && (
